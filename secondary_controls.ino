@@ -13,29 +13,45 @@
 
 #define TFT_DC  9
 #define TFT_CS 10
+#define MAX_NUM_CHILDREN 10
+#define MAX_NUM_PINS 10
 
 // Pre-proc. Dirs.
 #define NUM_LEDS 1
 enum States {
-  LV_STARTUP = 0,
-  LV_ACTIVE,
-  HV_SD,
-  HV_STARTUP,
-  HV_ACTIVE,
-  RTD_SD,
-  RTD_STARTUP,
-  RTD_ACTIVE,
+  DISPLAYING_DASH = 0,
+  DISPLAYING_MENU
+};
+enum ButtonStates {
+  BTN_NONE = 0,
+  BTN_0, // =1
+  BTN_1, // =2
+  BTN_2, // =3
+  BTN_3  // =4
 };
 
-typedef struct Vehicle { // the main attributes of the vehicle
-  uint8_t state;
-} Vehicle;
+class Node {
+  public:
+    int name;
+    void (*draw)(Node *);
+    Node * children[MAX_NUM_CHILDREN];
+    int numChildren;
+    int currentChildIndex;
+    Node * parent;
+    int pins[MAX_NUM_PINS];
+    int pinVals[MAX_NUM_PINS];
+    int numPins;
+};
 
-// Globals
-Vehicle vehicle = {};
+class Teensy {
+  public:
+    int state;
+};
 
 // Instantiate display obj; use hardware SPI (#13, #12, #11)
 ILI9341_t3 tft = ILI9341_t3(TFT_CS, TFT_DC);
+// Teensy obj to contain all necessary globals
+Teensy teensy = {};
 
 // Main setup function
 void setup() {
@@ -52,105 +68,23 @@ void setup() {
   // init Teensy pins
 
   // init the vehicle
-  vehicle.state = LV_STARTUP;
+  teensy.state = DISPLAYING_DASH;
 }
 
-char s[20];
-int i = 0;
 // Main control run loop
 void loop() {
 
-  if (vehicle.state == LV_STARTUP) {
+  if (teensy.state == DISPLAYING_DASH) {
     Serial.println("Setup complete");
-    vehicle.state = LV_ACTIVE;
+    teensy.state = DISPLAYING_MENU;
 
     tft.fillScreen(ILI9341_BLACK);
     tft.setCursor(0, 4);
-    tft.print("Hello, race carssss!");
+    tft.print("C++ iss go.");
 
 
     /* tft.fillScreen(ILI9341_BLACK); */
     /* tft.setCursor(20, 20); */
     /* tft.print("Hello"); */
   }
-
-  /* // Vehicle's main state machine (FSM) */
-  /* switch (vehicle.state) { */
-  /*   case LV_STARTUP: */
-  /*     // perform LV_STARTUP functions */
-  /*       // HERE */
-  /*     // transition to LV_ACTIVE */
-  /*     vehicle.state = LV_ACTIVE; */
-  /*     break; */
-  /*   case LV_ACTIVE: */
-  /*     // set led feedback */
-  /*     vehicle.leds[BLUE] = LED_ON; */
-  /*     vehicle.leds[YELLOW] = LED_OFF; */
-  /*     vehicle.leds[RED] = LED_OFF; */
-  /*     // wait to move to HV_STARTUP */
-  /*     if (digitalRead(buttonPins[HV_TOGGLE]) == LOW) { */
-  /*       vehicle.state = HV_STARTUP; */
-  /*     } */
-  /*     break; */
-  /*   case HV_SD: */
-  /*     // perform HV_SD functions */
-  /*       // HERE */
-  /*     // transition to LV_ACTIVE */
-  /*     vehicle.state = LV_ACTIVE; */
-  /*     break; */
-  /*   case HV_STARTUP: */
-  /*     // perform LV_STARTUP functions */
-  /*       // HERE */
-  /*     // transition to LV_ACTIVE */
-  /*     vehicle.state = HV_ACTIVE; */
-  /*     break; */
-  /*   case HV_ACTIVE: */
-  /*     // set led feedback */
-  /*     vehicle.leds[BLUE] = LED_ON; */
-  /*     vehicle.leds[YELLOW] = LED_ON; */
-  /*     vehicle.leds[RED] = LED_OFF; */
-  /*     // wait to move to RTD_STARTUP until user input */
-  /*     if (digitalRead(buttonPins[RTD_TOGGLE]) == LOW) { */
-  /*       vehicle.state = RTD_STARTUP; */
-  /*     } else if (digitalRead(buttonPins[HV_TOGGLE]) == LOW) { */
-  /*       // Or move back to LV active */
-  /*       vehicle.state = HV_SD; */
-  /*     } */
-  /*     break; */
-  /*   case RTD_SD: */
-  /*     // perform HV_SD functions */
-  /*       // HERE */
-  /*     // transition to LV_ACTIVE */
-  /*     vehicle.state = HV_ACTIVE; */
-  /*     break; */
-  /*   case RTD_STARTUP: */
-  /*     // perform LV_STARTUP functions */
-  /*       // HERE */
-  /*     // transition to LV_ACTIVE */
-  /*     vehicle.i = 0; */
-  /*     vehicle.state = RTD_ACTIVE; */
-  /*     break; */
-  /*   case RTD_ACTIVE: */
-  /*     // show entire system is hot */
-  /*     if (vehicle.i <= 1) { */
-  /*       vehicle.leds[BLUE] = LED_ON; */
-  /*       vehicle.leds[YELLOW] = LED_ON; */
-  /*       vehicle.leds[RED] = LED_ON; */
-  /*     } else { */
-  /*       // get speed */
-  /*       vehicle.dynamics.torque = (int)(analogRead(TORQUE_INPUT) / 2); */
-  /*       // show speed */
-  /*       vehicle.leds[SPEED] = ~vehicle.leds[SPEED]; */
-  /*       // wait to transition back */
-  /*       if (digitalRead(buttonPins[RTD_TOGGLE]) == LOW) { */
-  /*         // move back to HV_ACTIVE */
-  /*         vehicle.leds[SPEED] = LED_OFF; */
-  /*         vehicle.dynamics.torque = 50; */
-  /*         vehicle.state = RTD_SD; */
-  /*       } */
-  /*     } */
-  /*     break; */
-  /* } */
 }
-
-
