@@ -10,9 +10,10 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <cstring>
 #include <SPI.h>
 #include <ILI9341_t3.h> // display main lib
-#include <font_Arial.h>
+#include <font_Arial.h> // Available sizes: 8,9,10,11,12,13,14,16,18,20,24,28,32,40,60,72,96
 
 /***********************************************************************************************
 * #defs and Enums
@@ -21,21 +22,22 @@
 #define TFT_CS 10
 #define MAX_NUM_CHILDREN 10
 #define MAX_NUM_PINS 10
-#define MENU_TIMEOUT 10000 // in ms...=10s
+#define MENU_TIMEOUT 5000 // in ms
 #define ADC_CHANGE_TOLERANCE 3
 #define SUCCESSFUL_PRESS_TIME 100 // must be multiple of 20ms..(1/50)s
-#define NUM_BTNS 1
+#define NUM_BTNS 4
 #define START_BTN_PIN 2
+#define MAX_NODE_NAME_CHARS 20
 enum States {
   DISPLAYING_DASH = 0,
   DISPLAYING_MENU
 };
 enum ButtonStates {
   BTN_NONE = 0,
-  BTN_0, // =1
-  BTN_1, // =2
-  BTN_2, // =3
-  BTN_3  // =4
+  BTN_0, // =1, up
+  BTN_1, // =2, right
+  BTN_2, // =3, down
+  BTN_3  // =4, left
 };
 enum NodeNames {
   DASH_HEAD = 0,
@@ -49,7 +51,8 @@ enum NodeNames {
 ***********************************************************************************************/
 class Node {
   public:
-    int name = NAME_NONE;
+    int _name = NAME_NONE;
+    char name[MAX_NODE_NAME_CHARS+1] = {};
     void (*draw) (Node * node) = NULL; // draw function pointer
     Node * children[MAX_NUM_CHILDREN] = {};
     int numChildren = 0;
@@ -58,7 +61,17 @@ class Node {
     int pins[MAX_NUM_PINS] = {};
     int pinVals[MAX_NUM_PINS] = {};
     int numPins = 0;
+    Node(char * nameStr);
 };
+
+Node::Node (char * nameStr)
+{
+  if (nameStr != NULL) {
+    strcpy(name, nameStr);
+  } else {
+    strcpy(name, "- - no name - -");
+  }
+}
 
 class Teensy {
   public:
@@ -73,9 +86,11 @@ class Teensy {
 * Function prototype declarations
 ***********************************************************************************************/
 void _2hzTimer();
-void a50hzTimer();
+void _50hzTimer();
 int btnDebounce();
 void drawDash(Node * node);
+void drawMenuHead(Node * node);
+void drawNodeMenu(Node * node);
 
 
 /***********************************************************************************************
@@ -86,6 +101,7 @@ Teensy teensy = {};
 ILI9341_t3 tft = ILI9341_t3(TFT_CS, TFT_DC);
 
 IntervalTimer interval50hz;
+IntervalTimer interval2hz;
 
 
 /***********************************************************************************************
@@ -109,15 +125,26 @@ void setup() {
   }
 
   // create the node tree
-  Node * head = new Node; // dash is tree head
-  head->name = DASH_HEAD;
+  Node * head = new Node(NULL); // dash is tree head
+  head->_name = DASH_HEAD;
   head->draw = drawDash;
   // main menu
-  Node * menuHead = new Node;
-  menuHead->name = MENU_HEAD;
+  Node * menuHead = new Node(NULL);
+  menuHead->_name = MENU_HEAD;
   menuHead->draw = drawMenuHead;
   menuHead->parent = head;
   head->children[0] = menuHead;
+  // children of menu head
+  char name1[MAX_NODE_NAME_CHARS+1] = "Sensors";
+  char name2[MAX_NODE_NAME_CHARS+1] = "Settings";
+  char name3[MAX_NODE_NAME_CHARS+1] = "Other";
+  Node * child1 = new Node(name1);
+  Node * child2 = new Node(name2);
+  Node * child3 = new Node(name3);
+  menuHead->children[0] = child1;
+  menuHead->children[1] = child2;
+  menuHead->children[2] = child3;
+  menuHead->numChildren = 3;
 
 
   // init the vehicle
@@ -130,6 +157,7 @@ void setup() {
 
   // Set the interval timers
   interval50hz.begin(_50hzTimer, 20000);
+  interval2hz.begin(_2hzTimer, 500000);
 }
 
 // Main control run loop
@@ -150,35 +178,33 @@ void loop() {
         teensy.state = DISPLAYING_MENU; // transition to menu state
         teensy.contentDidChange = true; // trigger re-render
         teensy.menuTimer = 0; // clear menu timeout timer
-        tft.print("0");
-        delay(100);
+        teensy.btnPress = BTN_NONE; // reset btn press
       }
       break;
     // displaying members of menu node tree
     case DISPLAYING_MENU:
       if (teensy.contentDidChange) {
-        tft.print("1");
         // execute draw func. pointed to in node, to update display
         teensy.currentNode->draw(teensy.currentNode);
         teensy.contentDidChange = false; // clear re-render
       }
       if (teensy.menuTimer > MENU_TIMEOUT) {
         // return to dash state
-        tft.print("2");
         teensy.currentNode = teensy.currentNode->parent;
         teensy.state = DISPLAYING_DASH;
       }
       switch (teensy.btnPress) {
         case BTN_0: // up..backward through child highlighted
-          tft.print("3");
-          teensy.currentNode->currentChildIndex =
-            (teensy.currentNode->currentChildIndex - 1) % teensy.currentNode->numChildren;
+          teensy.currentNode->currentChildIndex -= 1;
+          if (teensy.currentNode->currentChildIndex < 0) {
+            teensy.currentNode->currentChildIndex = teensy.currentNode->numChildren - 1;
+          }
           teensy.contentDidChange = true; // trigger re-render
           teensy.btnPress = BTN_NONE; // reset btn press
           break;
         case BTN_1: // right..into child
           // make sure node has children
-          if (teensy.currentNode->numChildren > 0) {
+          if (teensy.currentNode->children[teensy.currentNode->currentChildIndex]->numChildren > 0) {
             // set parent of this child if not already set
             if (teensy.currentNode->children[teensy.currentNode->currentChildIndex]->parent == NULL) {
               teensy.currentNode->children[teensy.currentNode->currentChildIndex]->parent = teensy.currentNode;
@@ -186,19 +212,23 @@ void loop() {
             // move to the new node
             teensy.currentNode = teensy.currentNode->children[teensy.currentNode->currentChildIndex];
             teensy.contentDidChange = true; // trigger re-render
+          } else {
+            // (should show that item has no children)
           }
           teensy.btnPress = BTN_NONE; // reset btn press
           break;
         case BTN_2: // down..forward through child highlighted
-          teensy.currentNode->currentChildIndex =
-            (teensy.currentNode->currentChildIndex + 1) % teensy.currentNode->numChildren;
+          teensy.currentNode->currentChildIndex += 1;
+          if (teensy.currentNode->currentChildIndex >= teensy.currentNode->numChildren) {
+            teensy.currentNode->currentChildIndex = 0;
+          }
           teensy.contentDidChange = true; // trigger re-render
           teensy.btnPress = BTN_NONE; // reset btn press
           break;
         case BTN_3: // left..out to parent
           teensy.currentNode = teensy.currentNode->parent;
           teensy.contentDidChange = true;
-          if (teensy.currentNode->name == DASH_HEAD) {
+          if (teensy.currentNode->_name == DASH_HEAD) {
             teensy.state = DISPLAYING_DASH;
           }
           teensy.btnPress = BTN_NONE; // reset btn press
@@ -230,7 +260,7 @@ void _2hzTimer()
 
   // @desc Inc. menu timeout timer if in the menu state
   if (teensy.state == DISPLAYING_MENU) {
-    teensy.menuTimer += 200; // 1/5 second
+    teensy.menuTimer += 500; // 1/2 second
   }
 }
 
@@ -265,7 +295,6 @@ int btnDebounce()
     // btn successfully pressed
     prevState = BTN_NONE;
     timer = 0;
-    /* tft.print("5"); */
     return state; 
   } else if (prevState != state) {
     timer = 0; // btn state changed, reset
@@ -283,9 +312,39 @@ int btnDebounce()
 ***********************************************************************************************/
 void drawDash(Node * node)
 {
-  tft.print("a");
+  tft.fillScreen(ILI9341_BLACK);
+  tft.setFont(Arial_96);
+  tft.setCursor(0, 50);
+  tft.print("XX");
+  tft.setFont(Arial_28);
+  tft.setCursor(200, 117);
+  tft.print("mph");
+}
+void drawNodeMenu(Node * node)
+{
+  tft.fillScreen(ILI9341_BLACK);
+
+  int i;
+  for (i = 0; i < node->numChildren; i++) {
+    tft.setCursor(10, (10 + 52*i));
+    if (i == node->currentChildIndex) {
+      // invert display of node
+      tft.fillRect(0,(0 + 50*i),350,50,ILI9341_YELLOW);
+      tft.setTextColor(ILI9341_BLACK);
+      tft.print(node->children[i]->name);
+      tft.setTextColor(ILI9341_YELLOW);
+    } else {
+      // print regularly
+      tft.print(node->children[i]->name);
+      tft.drawFastHLine(0, (50 + 50*i), 320, ILI9341_YELLOW);
+      tft.drawFastHLine(0, (51 + 50*i), 320, ILI9341_YELLOW);
+    }
+  }
+  /* char num = node->currentChildIndex + '0'; */
+  /* tft.setCursor(100,170); */
+  /* tft.print({num}); */
 }
 void drawMenuHead(Node * node)
 {
-  tft.print("b");
+  drawNodeMenu(node);
 }
