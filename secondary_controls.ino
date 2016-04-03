@@ -18,8 +18,10 @@
 /***********************************************************************************************
 * #defs and Enums
 ***********************************************************************************************/
-#define TFT_DC  9
-#define TFT_CS 10
+#define TFT_0_DC 15
+#define TFT_0_CS 10
+#define TFT_1_DC 20
+#define TFT_1_CS 9
 #define MAX_NUM_CHILDREN 10
 #define MAX_NUM_PINS 10
 #define MENU_TIMEOUT 5000 // in ms
@@ -98,7 +100,8 @@ void drawNodeMenu(Node * node);
 ***********************************************************************************************/
 Teensy teensy = {};
 // Instantiate display obj and properties; use hardware SPI (#13, #12, #11)
-ILI9341_t3 tft = ILI9341_t3(TFT_CS, TFT_DC);
+ILI9341_t3 tft[2] = {ILI9341_t3(TFT_0_CS, TFT_0_DC), ILI9341_t3(TFT_1_CS, TFT_1_DC)};
+/* ILI9341_t3 tft = ILI9341_t3(TFT_0_CS, TFT_0_DC); */
 
 IntervalTimer interval50hz;
 IntervalTimer interval2hz;
@@ -109,17 +112,19 @@ IntervalTimer interval2hz;
 ***********************************************************************************************/
 void setup() {
   Serial.begin(9600);
-  tft.begin();
-  tft.setRotation(1);
-  tft.fillScreen(ILI9341_BLACK);
-  tft.setTextColor(ILI9341_YELLOW);
-  /* tft.setTextSize(2); */
-  tft.setFont(Arial_20);
-  tft.setCursor(0, 4); // (x,y)
+  int i;
+  for (i = 0; i < 2; i++) {
+    tft[i].begin();
+    tft[i].setRotation(1);
+    tft[i].fillScreen(ILI9341_BLACK);
+    tft[i].setTextColor(ILI9341_YELLOW);
+    /* tft[0].setTextSize(2); */
+    tft[i].setFont(Arial_20);
+    tft[i].setCursor(0, 4); // (x,y)
+  }
 
   // init Teensy pins
   // -> init btn pins
-  int i;
   for (i = START_BTN_PIN; i < (START_BTN_PIN + NUM_BTNS); i++) {
     pinMode(i, INPUT);
   }
@@ -157,7 +162,7 @@ void setup() {
 
   // Set the interval timers
   interval50hz.begin(_50hzTimer, 20000);
-  interval2hz.begin(_2hzTimer, 500000);
+  /* interval2hz.begin(_2hzTimer, 500000); */
 }
 
 // Main control run loop
@@ -312,37 +317,54 @@ int btnDebounce()
 ***********************************************************************************************/
 void drawDash(Node * node)
 {
-  tft.fillScreen(ILI9341_BLACK);
-  tft.setFont(Arial_96);
-  tft.setCursor(0, 50);
-  tft.print("XX");
-  tft.setFont(Arial_28);
-  tft.setCursor(200, 117);
-  tft.print("mph");
+  // display 1
+  tft[0].fillScreen(ILI9341_BLACK);
+  tft[0].setFont(Arial_96);
+  tft[0].setCursor(0, 50);
+  tft[0].print("XX");
+  tft[0].setFont(Arial_28);
+  tft[0].setCursor(200, 117);
+  tft[0].print("mph");
+  // display 2
+  tft[1].fillScreen(ILI9341_BLACK);
+  tft[1].setFont(Arial_48);
+  tft[1].setCursor(10, 10);
+  tft[1].print("FULL");
+  tft[1].setCursor(10, 80);
+  tft[1].print("100");
+  tft[1].setCursor(10, 150);
+  tft[1].print("SLAMUR");
 }
 void drawNodeMenu(Node * node)
 {
-  tft.fillScreen(ILI9341_BLACK);
-
+  // display 1
+  tft[0].fillScreen(ILI9341_BLACK);
   int i;
   for (i = 0; i < node->numChildren; i++) {
-    tft.setCursor(10, (10 + 52*i));
+    tft[0].setCursor(10, (10 + 52*i));
     if (i == node->currentChildIndex) {
       // invert display of node
-      tft.fillRect(0,(0 + 50*i),350,50,ILI9341_YELLOW);
-      tft.setTextColor(ILI9341_BLACK);
-      tft.print(node->children[i]->name);
-      tft.setTextColor(ILI9341_YELLOW);
+      tft[0].fillRect(0,(0 + 50*i),350,50,ILI9341_YELLOW);
+      tft[0].setTextColor(ILI9341_BLACK);
+      tft[0].print(node->children[i]->name);
+      tft[0].setTextColor(ILI9341_YELLOW);
     } else {
       // print regularly
-      tft.print(node->children[i]->name);
-      tft.drawFastHLine(0, (50 + 50*i), 320, ILI9341_YELLOW);
-      tft.drawFastHLine(0, (51 + 50*i), 320, ILI9341_YELLOW);
+      tft[0].print(node->children[i]->name);
+      tft[0].drawFastHLine(0, (50 + 50*i), 320, ILI9341_YELLOW);
+      tft[0].drawFastHLine(0, (51 + 50*i), 320, ILI9341_YELLOW);
     }
   }
   /* char num = node->currentChildIndex + '0'; */
-  /* tft.setCursor(100,170); */
-  /* tft.print({num}); */
+  /* tft[0].setCursor(100,170); */
+  /* tft[0].print({num}); */
+  // display 2
+  tft[1].fillScreen(ILI9341_BLACK);
+  tft[1].setCursor(10,10);
+  tft[1].setFont(Arial_20);
+  char str[30];
+  sprintf(str, "[This is <%s> node data]", node->children[node->currentChildIndex]->name);
+  tft[1].print(str);
 }
 void drawMenuHead(Node * node)
 {
