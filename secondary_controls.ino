@@ -38,7 +38,8 @@ enum ButtonStates {
 };
 enum NodeNames {
   DASH_HEAD = 0,
-  MENU_HEAD
+  MENU_HEAD,
+  NAME_NONE,
 };
 
 
@@ -47,15 +48,15 @@ enum NodeNames {
 ***********************************************************************************************/
 class Node {
   public:
-    int name;
-    void (*draw)(Node *);
-    Node * children[MAX_NUM_CHILDREN];
-    int numChildren;
-    int currentChildIndex;
-    Node * parent;
-    int pins[MAX_NUM_PINS];
-    int pinVals[MAX_NUM_PINS];
-    int numPins;
+    int name = NAME_NONE;
+    void (*draw) (Node * node) = NULL; // draw function pointer
+    Node * children[MAX_NUM_CHILDREN] = {};
+    int numChildren = 0;
+    int currentChildIndex = 0;
+    Node * parent = NULL;
+    int pins[MAX_NUM_PINS] = {};
+    int pinVals[MAX_NUM_PINS] = {};
+    int numPins = 0;
 };
 
 class Teensy {
@@ -67,14 +68,13 @@ class Teensy {
     int btnPress; // carries the current unservices state of the buttons
 };
 
-
 /***********************************************************************************************
 * Function prototype declarations
 ***********************************************************************************************/
 void _2hzTimer();
 void _20hzTimer();
 int btnDebounce();
-void drawDash(Node *);
+void drawDash(Node * node);
 
 
 /***********************************************************************************************
@@ -99,18 +99,15 @@ void setup() {
   tft.setCursor(0, 4); // (x,y)
 
   // init Teensy pins
+
   // create the node tree
-  Node dashHead;
-  dashHead.name = DASH_HEAD;
-  dashHead.draw = drawDash;
-  dashHead.numChildren = 0;
-  dashHead.currentChildIndex = 0;
-  dashHead.parent = NULL;
-  dashHead.numPins = 0;
+  Node * dashHead = new Node;
+  dashHead->name = DASH_HEAD;
+  dashHead->draw = drawDash;
 
   // init the vehicle
   teensy.state = DISPLAYING_DASH;
-  teensy.currentNode = &dashHead; // set to head of tree
+  teensy.currentNode = dashHead; // set to head of tree
   teensy.contentDidChange = true; // trigger an initial rendering
   teensy.btnPress = BTN_NONE;
   // NODES: - must have all their attributes defined, but do not need to have children
@@ -125,7 +122,6 @@ void loop() {
       // check if should redraw
       if (teensy.contentDidChange) {
         // execute drawDash func. pointed to, to update display
-        tft.print("<drawing dash>");
         teensy.currentNode->draw(teensy.currentNode);
         teensy.contentDidChange = false; // clear re-render
       }
@@ -183,18 +179,6 @@ void loop() {
       }
       break;
   }
-  /* if (teensy.state == DISPLAYING_DASH) { */
-  /*   Serial.println("Setup complete"); */
-  /*   teensy.state = DISPLAYING_MENU; */
-  /*  */
-  /*   tft.fillScreen(ILI9341_BLACK); */
-  /*   tft.setCursor(0, 4); */
-  /*   tft.print("C++ iss go."); */
-  /*  */
-  /*   tft.fillScreen(ILI9341_BLACK); */
-  /*   tft.setCursor(20, 20); */
-  /*   tft.print("Hello"); */
-  /* } */
 }
 
 /***********************************************************************************************
@@ -242,7 +226,7 @@ int btnDebounce()
 {
   static int prevState = BTN_NONE, state, timer;
   // !!!!!!!!!!
-  // READ STATE AND SET TO `state`
+  // READ STATE AND SET STORE IN `state`
   // !!!!!!!!!!
   if (timer >= SUCCESSFUL_PRESS_TIME) {
     // btn successfully pressed
@@ -263,7 +247,7 @@ int btnDebounce()
 /***********************************************************************************************
 * Node drawing functions
 ***********************************************************************************************/
-void drawDash(Node *)
+void drawDash(Node * node)
 {
   tft.print("[Displaying Dash]");
 }
