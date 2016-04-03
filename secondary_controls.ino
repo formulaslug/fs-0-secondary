@@ -237,15 +237,9 @@ void _2hzTimer()
 // @desc Sets button press state & performs debounce
 void _50hzTimer()
 {
-  static elapsedMillis sinceLastPress;
   // if there isn't a current btn press waiting to be serviced
-  //  && sinceLastPress >= 200
   if (!teensy.btnPress) {
     teensy.btnPress = btnDebounce();
-    /* if (teensy.btnPress) { */
-    /*   tft.print("4"); */
-    /*   sinceLastPress = 0; */
-    /* } */
   }
 }
 
