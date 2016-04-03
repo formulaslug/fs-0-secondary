@@ -251,11 +251,8 @@ void _50hzTimer()
 // @desc Button debounce, assumed to be ran in a 20hz timer
 int btnDebounce()
 {
-  static int prevState = BTN_NONE, state, timer;
-  // !!!!!!!!!!
-  // READ STATE AND SET STORE IN `state`
-  // !!!!!!!!!!
-  int i;
+  static int prevState = BTN_NONE, state, timer, i;
+
   state = BTN_NONE;
   // set to new state if exists
   for (i = 0; i < NUM_BTNS; i++) {
@@ -263,9 +260,6 @@ int btnDebounce()
       state = i + 1; // b/c btn states start at 1:BTN_0--4:BTN_3
     }
   }
-  // !!!!!!!!!!
-  // READ STATE AND SET STORE IN `state`
-  // !!!!!!!!!!
 
   if (timer >= SUCCESSFUL_PRESS_TIME && state != BTN_NONE) {
     // btn successfully pressed
