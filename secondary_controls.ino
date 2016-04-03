@@ -23,8 +23,9 @@
 #define MAX_NUM_PINS 10
 #define MENU_TIMEOUT 10000 // in ms...=10s
 #define ADC_CHANGE_TOLERANCE 3
-#define SUCCESSFUL_PRESS_TIME 200 
-#define NUM_LEDS 1
+#define SUCCESSFUL_PRESS_TIME 100 // must be multiple of 20ms..(1/50)s
+#define NUM_BTNS 1
+#define START_BTN_PIN 2
 enum States {
   DISPLAYING_DASH = 0,
   DISPLAYING_MENU
@@ -72,7 +73,7 @@ class Teensy {
 * Function prototype declarations
 ***********************************************************************************************/
 void _2hzTimer();
-void _20hzTimer();
+void a50hzTimer();
 int btnDebounce();
 void drawDash(Node * node);
 
@@ -83,6 +84,8 @@ void drawDash(Node * node);
 Teensy teensy = {};
 // Instantiate display obj and properties; use hardware SPI (#13, #12, #11)
 ILI9341_t3 tft = ILI9341_t3(TFT_CS, TFT_DC);
+
+IntervalTimer interval50hz;
 
 
 /***********************************************************************************************
@@ -99,19 +102,34 @@ void setup() {
   tft.setCursor(0, 4); // (x,y)
 
   // init Teensy pins
+  // -> init btn pins
+  int i;
+  for (i = START_BTN_PIN; i < (START_BTN_PIN + NUM_BTNS); i++) {
+    pinMode(i, INPUT);
+  }
 
   // create the node tree
-  Node * dashHead = new Node;
-  dashHead->name = DASH_HEAD;
-  dashHead->draw = drawDash;
+  Node * head = new Node; // dash is tree head
+  head->name = DASH_HEAD;
+  head->draw = drawDash;
+  // main menu
+  Node * menuHead = new Node;
+  menuHead->name = MENU_HEAD;
+  menuHead->draw = drawMenuHead;
+  menuHead->parent = head;
+  head->children[0] = menuHead;
+
 
   // init the vehicle
   teensy.state = DISPLAYING_DASH;
-  teensy.currentNode = dashHead; // set to head of tree
+  teensy.currentNode = head; // set to head of tree
   teensy.contentDidChange = true; // trigger an initial rendering
   teensy.btnPress = BTN_NONE;
   // NODES: - must have all their attributes defined, but do not need to have children
   //    - must init currentChildIndex=0
+
+  // Set the interval timers
+  interval50hz.begin(_50hzTimer, 20000);
 }
 
 // Main control run loop
@@ -127,30 +145,36 @@ void loop() {
       }
       // check if should display menu, this btnPress is not counted for menu navigation
       if (teensy.btnPress) {
+      /* if (true) { */
         teensy.currentNode = teensy.currentNode->children[0]; // move to mainMenu node
         teensy.state = DISPLAYING_MENU; // transition to menu state
         teensy.contentDidChange = true; // trigger re-render
         teensy.menuTimer = 0; // clear menu timeout timer
-        tft.print("<trans. to menu>");
+        tft.print("0");
+        delay(100);
       }
       break;
     // displaying members of menu node tree
     case DISPLAYING_MENU:
       if (teensy.contentDidChange) {
-        tft.print("<displaying menu>");
+        tft.print("1");
         // execute draw func. pointed to in node, to update display
         teensy.currentNode->draw(teensy.currentNode);
         teensy.contentDidChange = false; // clear re-render
       }
       if (teensy.menuTimer > MENU_TIMEOUT) {
         // return to dash state
+        tft.print("2");
+        teensy.currentNode = teensy.currentNode->parent;
         teensy.state = DISPLAYING_DASH;
       }
       switch (teensy.btnPress) {
         case BTN_0: // up..backward through child highlighted
+          tft.print("3");
           teensy.currentNode->currentChildIndex =
             (teensy.currentNode->currentChildIndex - 1) % teensy.currentNode->numChildren;
           teensy.contentDidChange = true; // trigger re-render
+          teensy.btnPress = BTN_NONE; // reset btn press
           break;
         case BTN_1: // right..into child
           // make sure node has children
@@ -163,11 +187,13 @@ void loop() {
             teensy.currentNode = teensy.currentNode->children[teensy.currentNode->currentChildIndex];
             teensy.contentDidChange = true; // trigger re-render
           }
+          teensy.btnPress = BTN_NONE; // reset btn press
           break;
         case BTN_2: // down..forward through child highlighted
           teensy.currentNode->currentChildIndex =
             (teensy.currentNode->currentChildIndex + 1) % teensy.currentNode->numChildren;
           teensy.contentDidChange = true; // trigger re-render
+          teensy.btnPress = BTN_NONE; // reset btn press
           break;
         case BTN_3: // left..out to parent
           teensy.currentNode = teensy.currentNode->parent;
@@ -175,6 +201,7 @@ void loop() {
           if (teensy.currentNode->name == DASH_HEAD) {
             teensy.state = DISPLAYING_DASH;
           }
+          teensy.btnPress = BTN_NONE; // reset btn press
           break;
       }
       break;
@@ -208,11 +235,17 @@ void _2hzTimer()
 }
 
 // @desc Sets button press state & performs debounce
-void _20hzTimer()
+void _50hzTimer()
 {
+  static elapsedMillis sinceLastPress;
   // if there isn't a current btn press waiting to be serviced
+  //  && sinceLastPress >= 200
   if (!teensy.btnPress) {
     teensy.btnPress = btnDebounce();
+    /* if (teensy.btnPress) { */
+    /*   tft.print("4"); */
+    /*   sinceLastPress = 0; */
+    /* } */
   }
 }
 
@@ -228,15 +261,28 @@ int btnDebounce()
   // !!!!!!!!!!
   // READ STATE AND SET STORE IN `state`
   // !!!!!!!!!!
-  if (timer >= SUCCESSFUL_PRESS_TIME) {
+  int i;
+  state = BTN_NONE;
+  // set to new state if exists
+  for (i = 0; i < NUM_BTNS; i++) {
+    if (digitalRead(i + START_BTN_PIN) == LOW) {
+      state = i + 1; // b/c btn states start at 1:BTN_0--4:BTN_3
+    }
+  }
+  // !!!!!!!!!!
+  // READ STATE AND SET STORE IN `state`
+  // !!!!!!!!!!
+
+  if (timer >= SUCCESSFUL_PRESS_TIME && state != BTN_NONE) {
     // btn successfully pressed
     prevState = BTN_NONE;
     timer = 0;
+    /* tft.print("5"); */
     return state; 
   } else if (prevState != state) {
     timer = 0; // btn state changed, reset
   } else {
-    timer += 50; // btn state persisted..+50ms (1/20s)
+    timer += 20; // btn state persisted..+20ms (1/50)s
   }
   prevState = state;
   return BTN_NONE; // return none until a press is evaled
@@ -249,5 +295,9 @@ int btnDebounce()
 ***********************************************************************************************/
 void drawDash(Node * node)
 {
-  tft.print("[Displaying Dash]");
+  tft.print("a");
+}
+void drawMenuHead(Node * node)
+{
+  tft.print("b");
 }
