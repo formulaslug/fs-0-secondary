@@ -4,6 +4,15 @@
 #include <cstdint>
 #include <vector>
 
+#include <ILI9341_t3.h>
+/* ILI9341.h defines a swap macro that conflicts with the C++ standard library,
+ * so this undefines it to avoid problems (it should be using the standard
+ * library's std::swap() anyway...)
+ */
+#undef swap
+
+typedef ILI9341_t3 Display;
+
 enum class NodeType {
   DashHead,
   MenuHead,
@@ -12,9 +21,10 @@ enum class NodeType {
 
 class Node {
  public:
-  Node(void (*drawFunc)(Node* node), const char* nameStr = "- - no name - -");
+  Node(const char* nameStr);
 
   void addChild(Node* child);
+  virtual void draw(Display* displays);
 
   static constexpr uint32_t k_maxNumPins = 10;
   static constexpr uint32_t k_maxNodeNameChars = 20;

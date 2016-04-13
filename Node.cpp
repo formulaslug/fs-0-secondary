@@ -2,12 +2,14 @@
 
 #include <cstring>
 
-Node::Node(void (*drawFunc)(Node* node), const char* nameStr) {
-  this->drawFunc = drawFunc;
+Node::Node(const char* nameStr) {
   std::strcpy(name, nameStr);
 }
 
 void Node::addChild(Node* child) {
   child->parent = this;
   children.push_back(child);
+}
+
+void Node::draw(Display* displays) {
 }

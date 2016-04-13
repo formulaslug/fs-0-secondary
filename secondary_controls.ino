@@ -8,20 +8,19 @@
 #include <cstdint>
 #include <cstdio>
 #include <SPI.h>
-#include <ILI9341_t3.h> // display main lib
 
+/* Available sizes: 8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 24, 28, 32, 40, 60,
+ *                  72, 96
+ */
+#include <font_Arial.h>
 /* ILI9341.h defines a swap macro that conflicts with the C++ standard library,
  * so this undefines it to avoid problems (it should be using the standard
  * library's std::swap() anyway...)
  */
 #undef swap
 
-/* Available sizes: 8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 24, 28, 32, 40, 60,
- *                  72, 96
- */
-#include <font_Arial.h>
-
-#include "Node.h"
+#include "DashNode.h"
+#include "MenuNode.h"
 #include "Teensy.h"
 
 constexpr uint32_t TFT_0_DC = 15;
@@ -40,9 +39,6 @@ constexpr uint32_t START_BTN_PIN = 2;
 void _2hzTimer();
 void _50hzTimer();
 int btnDebounce();
-void drawDash(Node* node);
-void drawMenuHead(Node* node);
-void drawNodeMenu(Node* node);
 
 // Globals
 static Teensy* teensy;
@@ -74,18 +70,18 @@ void setup() {
   }
 
   // create the node tree
-  auto head = new Node(drawDash); // dash is tree head
+  auto head = new DashNode(); // dash is tree head
   head->m_nodeType = NodeType::DashHead;
 
   // main menu
-  auto menuHead = new Node(drawMenuHead);
+  auto menuHead = new MenuNode();
   menuHead->m_nodeType = NodeType::MenuHead;
   head->addChild(menuHead);
 
   // children of menu head
-  menuHead->addChild(new Node(nullptr, "Sensors"));
-  menuHead->addChild(new Node(nullptr, "Settings"));
-  menuHead->addChild(new Node(nullptr, "Other"));
+  menuHead->addChild(new Node("Sensors"));
+  menuHead->addChild(new Node("Settings"));
+  menuHead->addChild(new Node("Other"));
 
   teensy = new Teensy(head);
 
@@ -106,14 +102,14 @@ void loop() {
       // check if should redraw screen
       if (teensy->redrawScreen) {
         // execute drawDash func. pointed to, to update display
-        teensy->currentNode->drawFunc(teensy->currentNode);
+        teensy->currentNode->draw(tft);
         teensy->redrawScreen = false;
       }
       // check if should display menu, this btnPress is not counted for menu navigation
       if (teensy->btnPress) {
         teensy->currentNode = teensy->currentNode->children[0]; // move to mainMenu node
         teensy->displayState = DisplayState::Menu; // transition to menu state
-        teensy->redrawScreen = true; // trigger re-render
+        teensy->redrawScreen = true;
         teensy->menuTimer = 0; // clear menu timeout timer
         teensy->btnPress = BTN_NONE; // reset btn press
       }
@@ -122,8 +118,8 @@ void loop() {
     case DisplayState::Menu:
       if (teensy->redrawScreen) {
         // execute draw func. pointed to in node, to update display
-        teensy->currentNode->drawFunc(teensy->currentNode);
-        teensy->redrawScreen = false; // clear re-render
+        teensy->currentNode->draw(tft);
+        teensy->redrawScreen = false;
       }
       if (teensy->menuTimer > MENU_TIMEOUT) {
         // return to dash state
@@ -137,7 +133,7 @@ void loop() {
           } else {
             teensy->currentNode->childIndex = teensy->currentNode->children.size() - 1;
           }
-          teensy->redrawScreen = true; // trigger re-render
+          teensy->redrawScreen = true;
           teensy->btnPress = BTN_NONE; // reset btn press
           break;
         case BTN_1: // right..into child
@@ -145,7 +141,7 @@ void loop() {
           if (teensy->currentNode->children[teensy->currentNode->childIndex]->children.size() > 0) {
             // move to the new node
             teensy->currentNode = teensy->currentNode->children[teensy->currentNode->childIndex];
-            teensy->redrawScreen = true; // trigger re-render
+            teensy->redrawScreen = true;
           } else {
             // (should show that item has no children)
           }
@@ -233,65 +229,4 @@ int btnDebounce() {
   }
   prevState = state;
   return BTN_NONE; // return none until a press is evaled
-}
-
-/***********************************************************************************************
-* Node drawing functions
-***********************************************************************************************/
-void drawDash(Node* node) {
-  // display 1
-  tft[0].fillScreen(ILI9341_BLACK);
-  tft[0].setFont(Arial_96);
-  tft[0].setCursor(0, 50);
-  tft[0].print("XX");
-  tft[0].setFont(Arial_28);
-  tft[0].setCursor(200, 117);
-  tft[0].print("mph");
-
-  // display 2
-  tft[1].fillScreen(ILI9341_BLACK);
-  tft[1].setFont(Arial_48);
-  tft[1].setCursor(10, 10);
-  tft[1].print("FULL");
-  tft[1].setCursor(10, 80);
-  tft[1].print("100");
-  tft[1].setCursor(10, 150);
-  tft[1].print("SLAMUR");
-}
-
-void drawNodeMenu(Node* node) {
-  // display 1
-  tft[0].fillScreen(ILI9341_BLACK);
-
-  for (uint32_t i = 0; i < node->children.size(); i++) {
-    tft[0].setCursor(10, (10 + 52 * i));
-    if (i == node->childIndex) {
-      // invert display of node
-      tft[0].fillRect(0, (0 + 50 * i), 350, 50, ILI9341_YELLOW);
-      tft[0].setTextColor(ILI9341_BLACK);
-      tft[0].print(node->children[i]->name);
-      tft[0].setTextColor(ILI9341_YELLOW);
-    } else {
-      // print regularly
-      tft[0].print(node->children[i]->name);
-      tft[0].drawFastHLine(0, (50 + 50 * i), 320, ILI9341_YELLOW);
-      tft[0].drawFastHLine(0, (51 + 50 * i), 320, ILI9341_YELLOW);
-    }
-  }
-
-  /* char num = node->childIndex + '0'; */
-  /* tft[0].setCursor(100,170); */
-  /* tft[0].print({num}); */
-  // display 2
-  tft[1].fillScreen(ILI9341_BLACK);
-  tft[1].setCursor(10,10);
-  tft[1].setFont(Arial_20);
-
-  char str[30];
-  sprintf(str, "[This is <%s> node data]", node->children[node->childIndex]->name);
-  tft[1].print(str);
-}
-
-void drawMenuHead(Node* node) {
-  drawNodeMenu(node);
 }
