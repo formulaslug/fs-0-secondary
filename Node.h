@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <vector>
 
-enum class NodeName {
+enum class NodeType {
   DashHead,
   MenuHead,
   None,
@@ -12,16 +12,19 @@ enum class NodeName {
 
 class Node {
  public:
-  Node(const char* nameStr = "- - no name - -");
+  Node(void (*drawFunc)(Node* node), const char* nameStr = "- - no name - -");
+
+  void addChild(Node* child);
 
   static constexpr uint32_t k_maxNumPins = 10;
   static constexpr uint32_t k_maxNodeNameChars = 20;
 
-  NodeName m_nodeName = NodeName::None;
   char name[k_maxNodeNameChars + 1] = {};
-  void (*draw) (Node* node) = nullptr; // draw function pointer
+  NodeType m_nodeType = NodeType::None;
+  void (*drawFunc) (Node* node) = nullptr; // draw function pointer
+ public:
   std::vector<Node*> children;
-  uint32_t currentChildIndex = 0;
+  uint32_t childIndex = 0;
   Node* parent = nullptr;
   uint32_t pins[k_maxNumPins] = {};
   uint32_t pinVals[k_maxNumPins] = {};

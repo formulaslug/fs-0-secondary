@@ -25,7 +25,7 @@ struct Teensy {
   DisplayState displayState = DisplayState::Dash;
   Node* currentNode;
   uint32_t menuTimer;
-  bool contentDidChange = true; // Trigger an initial rendering
+  bool redrawScreen = true; // Trigger an initial rendering
   int btnPress = BTN_NONE; // Carries current unserviced state of buttons
 };
 

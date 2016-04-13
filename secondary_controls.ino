@@ -44,7 +44,6 @@ void drawDash(Node* node);
 void drawMenuHead(Node* node);
 void drawNodeMenu(Node* node);
 
-
 // Globals
 static Teensy* teensy;
 // Instantiate display obj and properties; use hardware SPI (#13, #12, #11)
@@ -75,21 +74,18 @@ void setup() {
   }
 
   // create the node tree
-  auto head = new Node(); // dash is tree head
-  head->m_nodeName = NodeName::DashHead;
-  head->draw = drawDash;
+  auto head = new Node(drawDash); // dash is tree head
+  head->m_nodeType = NodeType::DashHead;
 
   // main menu
-  auto menuHead = new Node();
-  menuHead->m_nodeName = NodeName::MenuHead;
-  menuHead->draw = drawMenuHead;
-  menuHead->parent = head;
-  head->children.push_back(menuHead);
+  auto menuHead = new Node(drawMenuHead);
+  menuHead->m_nodeType = NodeType::MenuHead;
+  head->addChild(menuHead);
 
   // children of menu head
-  menuHead->children.push_back(new Node("Sensors"));
-  menuHead->children.push_back(new Node("Settings"));
-  menuHead->children.push_back(new Node("Other"));
+  menuHead->addChild(new Node(nullptr, "Sensors"));
+  menuHead->addChild(new Node(nullptr, "Settings"));
+  menuHead->addChild(new Node(nullptr, "Other"));
 
   teensy = new Teensy(head);
 
@@ -107,28 +103,27 @@ void loop() {
   switch(teensy->displayState) {
     // displaying dash only
     case DisplayState::Dash:
-      // check if should redraw
-      if (teensy->contentDidChange) {
+      // check if should redraw screen
+      if (teensy->redrawScreen) {
         // execute drawDash func. pointed to, to update display
-        teensy->currentNode->draw(teensy->currentNode);
-        teensy->contentDidChange = false; // clear re-render
+        teensy->currentNode->drawFunc(teensy->currentNode);
+        teensy->redrawScreen = false;
       }
       // check if should display menu, this btnPress is not counted for menu navigation
       if (teensy->btnPress) {
-      /* if (true) { */
         teensy->currentNode = teensy->currentNode->children[0]; // move to mainMenu node
         teensy->displayState = DisplayState::Menu; // transition to menu state
-        teensy->contentDidChange = true; // trigger re-render
+        teensy->redrawScreen = true; // trigger re-render
         teensy->menuTimer = 0; // clear menu timeout timer
         teensy->btnPress = BTN_NONE; // reset btn press
       }
       break;
     // displaying members of menu node tree
     case DisplayState::Menu:
-      if (teensy->contentDidChange) {
+      if (teensy->redrawScreen) {
         // execute draw func. pointed to in node, to update display
-        teensy->currentNode->draw(teensy->currentNode);
-        teensy->contentDidChange = false; // clear re-render
+        teensy->currentNode->drawFunc(teensy->currentNode);
+        teensy->redrawScreen = false; // clear re-render
       }
       if (teensy->menuTimer > MENU_TIMEOUT) {
         // return to dash state
@@ -137,41 +132,38 @@ void loop() {
       }
       switch (teensy->btnPress) {
         case BTN_0: // up..backward through child highlighted
-          if (teensy->currentNode->currentChildIndex > 0) {
-            teensy->currentNode->currentChildIndex--;
+          if (teensy->currentNode->childIndex > 0) {
+            teensy->currentNode->childIndex--;
           } else {
-            teensy->currentNode->currentChildIndex = teensy->currentNode->children.size() - 1;
+            teensy->currentNode->childIndex = teensy->currentNode->children.size() - 1;
           }
-          teensy->contentDidChange = true; // trigger re-render
+          teensy->redrawScreen = true; // trigger re-render
           teensy->btnPress = BTN_NONE; // reset btn press
           break;
         case BTN_1: // right..into child
           // make sure node has children
-          if (teensy->currentNode->children[teensy->currentNode->currentChildIndex]->children.size() > 0) {
-            // set parent of this child if not already set
-            if (teensy->currentNode->children[teensy->currentNode->currentChildIndex]->parent == nullptr) {
-              teensy->currentNode->children[teensy->currentNode->currentChildIndex]->parent = teensy->currentNode;
-            }
+          if (teensy->currentNode->children[teensy->currentNode->childIndex]->children.size() > 0) {
             // move to the new node
-            teensy->currentNode = teensy->currentNode->children[teensy->currentNode->currentChildIndex];
-            teensy->contentDidChange = true; // trigger re-render
+            teensy->currentNode = teensy->currentNode->children[teensy->currentNode->childIndex];
+            teensy->redrawScreen = true; // trigger re-render
           } else {
             // (should show that item has no children)
           }
           teensy->btnPress = BTN_NONE; // reset btn press
           break;
         case BTN_2: // down..forward through child highlighted
-          teensy->currentNode->currentChildIndex += 1;
-          if (teensy->currentNode->currentChildIndex >= teensy->currentNode->children.size()) {
-            teensy->currentNode->currentChildIndex = 0;
+          if (teensy->currentNode->childIndex == teensy->currentNode->children.size() - 1) {
+            teensy->currentNode->childIndex = 0;
+          } else {
+            teensy->currentNode->childIndex++;
           }
-          teensy->contentDidChange = true; // trigger re-render
+          teensy->redrawScreen = true;
           teensy->btnPress = BTN_NONE; // reset btn press
           break;
         case BTN_3: // left..out to parent
           teensy->currentNode = teensy->currentNode->parent;
-          teensy->contentDidChange = true;
-          if (teensy->currentNode->m_nodeName == NodeName::DashHead) {
+          teensy->redrawScreen = true;
+          if (teensy->currentNode->m_nodeType == NodeType::DashHead) {
             teensy->displayState = DisplayState::Dash;
           }
           teensy->btnPress = BTN_NONE; // reset btn press
@@ -196,7 +188,7 @@ void _2hzTimer() {
     if (valDecreased || valIncreased) {
       // pin/adc val changed by more than ADC_CHANGE_TOLERANCE
       teensy->currentNode->pinVals[i] = newVal;
-      teensy->contentDidChange = true; // trigger re-render
+      teensy->redrawScreen = true;
     }
   }
 
@@ -243,8 +235,6 @@ int btnDebounce() {
   return BTN_NONE; // return none until a press is evaled
 }
 
-
-
 /***********************************************************************************************
 * Node drawing functions
 ***********************************************************************************************/
@@ -275,9 +265,9 @@ void drawNodeMenu(Node* node) {
 
   for (uint32_t i = 0; i < node->children.size(); i++) {
     tft[0].setCursor(10, (10 + 52 * i));
-    if (i == node->currentChildIndex) {
+    if (i == node->childIndex) {
       // invert display of node
-      tft[0].fillRect(0, (0 + 50*i), 350, 50, ILI9341_YELLOW);
+      tft[0].fillRect(0, (0 + 50 * i), 350, 50, ILI9341_YELLOW);
       tft[0].setTextColor(ILI9341_BLACK);
       tft[0].print(node->children[i]->name);
       tft[0].setTextColor(ILI9341_YELLOW);
@@ -289,7 +279,7 @@ void drawNodeMenu(Node* node) {
     }
   }
 
-  /* char num = node->currentChildIndex + '0'; */
+  /* char num = node->childIndex + '0'; */
   /* tft[0].setCursor(100,170); */
   /* tft[0].print({num}); */
   // display 2
@@ -298,7 +288,7 @@ void drawNodeMenu(Node* node) {
   tft[1].setFont(Arial_20);
 
   char str[30];
-  sprintf(str, "[This is <%s> node data]", node->children[node->currentChildIndex]->name);
+  sprintf(str, "[This is <%s> node data]", node->children[node->childIndex]->name);
   tft[1].print(str);
 }
 
