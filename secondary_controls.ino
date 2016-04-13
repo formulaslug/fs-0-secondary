@@ -78,10 +78,14 @@ void setup() {
   menuHead->m_nodeType = NodeType::MenuHead;
   head->addChild(menuHead);
 
-  // children of menu head
-  menuHead->addChild(new Node("Sensors"));
-  menuHead->addChild(new Node("Settings"));
-  menuHead->addChild(new Node("Other"));
+  auto sensors = new MenuNode("Sensors");
+  sensors->addChild(new Node("Sensor 1"));
+  sensors->addChild(new Node("Sensor 2"));
+  sensors->addChild(new Node("Sensor 3"));
+  menuHead->addChild(sensors);
+
+  menuHead->addChild(new MenuNode("Settings"));
+  menuHead->addChild(new MenuNode("Other"));
 
   teensy = new Teensy(head);
 
