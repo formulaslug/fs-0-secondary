@@ -23,11 +23,6 @@
 #include "MenuNode.h"
 #include "Teensy.h"
 
-constexpr uint32_t TFT_0_DC = 15;
-constexpr uint32_t TFT_0_CS = 10;
-constexpr uint32_t TFT_1_DC = 20;
-constexpr uint32_t TFT_1_CS = 9;
-constexpr uint32_t MENU_TIMEOUT = 5000; // in ms
 constexpr uint32_t ADC_CHANGE_TOLERANCE = 3;
 
 // Must be multiple of 20ms (1/50s)
@@ -40,17 +35,23 @@ void _2hzTimer();
 void _50hzTimer();
 int btnDebounce();
 
-// Globals
 static Teensy* teensy;
-// Instantiate display obj and properties; use hardware SPI (#13, #12, #11)
-static ILI9341_t3 tft[2] = {ILI9341_t3(TFT_0_CS, TFT_0_DC),
-                            ILI9341_t3(TFT_1_CS, TFT_1_DC)};
-/* ILI9341_t3 tft = ILI9341_t3(TFT_0_CS, TFT_0_DC); */
 
-IntervalTimer interval50hz;
-IntervalTimer interval2hz;
+int main() {
+  constexpr uint32_t TFT_0_DC = 15;
+  constexpr uint32_t TFT_0_CS = 10;
+  constexpr uint32_t TFT_1_DC = 20;
+  constexpr uint32_t TFT_1_CS = 9;
+  constexpr uint32_t MENU_TIMEOUT = 5000; // in ms
 
-void setup() {
+  // Instantiate display obj and properties; use hardware SPI (#13, #12, #11)
+  ILI9341_t3 tft[2] = {ILI9341_t3(TFT_0_CS, TFT_0_DC),
+                              ILI9341_t3(TFT_1_CS, TFT_1_DC)};
+  /* ILI9341_t3 tft = ILI9341_t3(TFT_0_CS, TFT_0_DC); */
+
+  IntervalTimer interval50hz;
+  IntervalTimer interval2hz;
+
   Serial.begin(9600);
   uint32_t i;
   for (i = 0; i < 2; i++) {
@@ -96,80 +97,79 @@ void setup() {
   // Set the interval timers
   interval50hz.begin(_50hzTimer, 20000);
   /* interval2hz.begin(_2hzTimer, 500000); */
-}
 
-// Main control run loop
-void loop() {
-  switch(teensy->displayState) {
-    // displaying dash only
-    case DisplayState::Dash:
-      // check if should redraw screen
-      if (teensy->redrawScreen) {
-        // execute drawDash func. pointed to, to update display
-        teensy->currentNode->draw(tft);
-        teensy->redrawScreen = false;
-      }
-      // check if should display menu, this btnPress is not counted for menu navigation
-      if (teensy->btnPress) {
-        teensy->currentNode = teensy->currentNode->children[0]; // move to mainMenu node
-        teensy->displayState = DisplayState::Menu; // transition to menu state
-        teensy->redrawScreen = true;
-        teensy->menuTimer = 0; // clear menu timeout timer
-        teensy->btnPress = BTN_NONE; // reset btn press
-      }
-      break;
-    // displaying members of menu node tree
-    case DisplayState::Menu:
-      if (teensy->redrawScreen) {
-        // execute draw func. pointed to in node, to update display
-        teensy->currentNode->draw(tft);
-        teensy->redrawScreen = false;
-      }
-      if (teensy->menuTimer > MENU_TIMEOUT) {
-        // return to dash state
-        teensy->currentNode = teensy->currentNode->parent;
-        teensy->displayState = DisplayState::Dash;
-      }
-      switch (teensy->btnPress) {
-        case BTN_0: // up..backward through child highlighted
-          if (teensy->currentNode->childIndex > 0) {
-            teensy->currentNode->childIndex--;
-          } else {
-            teensy->currentNode->childIndex = teensy->currentNode->children.size() - 1;
-          }
+  while(1) {
+    switch(teensy->displayState) {
+      // displaying dash only
+      case DisplayState::Dash:
+        // check if should redraw screen
+        if (teensy->redrawScreen) {
+          // execute drawDash func. pointed to, to update display
+          teensy->currentNode->draw(tft);
+          teensy->redrawScreen = false;
+        }
+        // check if should display menu, this btnPress is not counted for menu navigation
+        if (teensy->btnPress) {
+          teensy->currentNode = teensy->currentNode->children[0]; // move to mainMenu node
+          teensy->displayState = DisplayState::Menu; // transition to menu state
           teensy->redrawScreen = true;
+          teensy->menuTimer = 0; // clear menu timeout timer
           teensy->btnPress = BTN_NONE; // reset btn press
-          break;
-        case BTN_1: // right..into child
-          // make sure node has children
-          if (teensy->currentNode->children[teensy->currentNode->childIndex]->children.size() > 0) {
-            // move to the new node
-            teensy->currentNode = teensy->currentNode->children[teensy->currentNode->childIndex];
-            teensy->redrawScreen = true;
-          } else {
-            // (should show that item has no children)
-          }
-          teensy->btnPress = BTN_NONE; // reset btn press
-          break;
-        case BTN_2: // down..forward through child highlighted
-          if (teensy->currentNode->childIndex == teensy->currentNode->children.size() - 1) {
-            teensy->currentNode->childIndex = 0;
-          } else {
-            teensy->currentNode->childIndex++;
-          }
-          teensy->redrawScreen = true;
-          teensy->btnPress = BTN_NONE; // reset btn press
-          break;
-        case BTN_3: // left..out to parent
+        }
+        break;
+      // displaying members of menu node tree
+      case DisplayState::Menu:
+        if (teensy->redrawScreen) {
+          // execute draw func. pointed to in node, to update display
+          teensy->currentNode->draw(tft);
+          teensy->redrawScreen = false;
+        }
+        if (teensy->menuTimer > MENU_TIMEOUT) {
+          // return to dash state
           teensy->currentNode = teensy->currentNode->parent;
-          teensy->redrawScreen = true;
-          if (teensy->currentNode->m_nodeType == NodeType::DashHead) {
-            teensy->displayState = DisplayState::Dash;
-          }
-          teensy->btnPress = BTN_NONE; // reset btn press
-          break;
-      }
-      break;
+          teensy->displayState = DisplayState::Dash;
+        }
+        switch (teensy->btnPress) {
+          case BTN_0: // up..backward through child highlighted
+            if (teensy->currentNode->childIndex > 0) {
+              teensy->currentNode->childIndex--;
+            } else {
+              teensy->currentNode->childIndex = teensy->currentNode->children.size() - 1;
+            }
+            teensy->redrawScreen = true;
+            teensy->btnPress = BTN_NONE; // reset btn press
+            break;
+          case BTN_1: // right..into child
+            // make sure node has children
+            if (teensy->currentNode->children[teensy->currentNode->childIndex]->children.size() > 0) {
+              // move to the new node
+              teensy->currentNode = teensy->currentNode->children[teensy->currentNode->childIndex];
+              teensy->redrawScreen = true;
+            } else {
+              // (should show that item has no children)
+            }
+            teensy->btnPress = BTN_NONE; // reset btn press
+            break;
+          case BTN_2: // down..forward through child highlighted
+            if (teensy->currentNode->childIndex == teensy->currentNode->children.size() - 1) {
+              teensy->currentNode->childIndex = 0;
+            } else {
+              teensy->currentNode->childIndex++;
+            }
+            teensy->redrawScreen = true;
+            teensy->btnPress = BTN_NONE; // reset btn press
+            break;
+          case BTN_3: // left..out to parent
+            teensy->currentNode = teensy->currentNode->parent;
+            teensy->redrawScreen = true;
+            if (teensy->currentNode->m_nodeType == NodeType::DashHead) {
+              teensy->displayState = DisplayState::Dash;
+            }
+            teensy->btnPress = BTN_NONE; // reset btn press
+            break;
+        }
+        break;
+    }
   }
 }
 
