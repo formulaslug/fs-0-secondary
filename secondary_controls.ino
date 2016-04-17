@@ -182,7 +182,7 @@ void _2hzTimer() {
 
   // @desc Check if node's observed pins changed in value and must re-render
   for (i = 0; i < teensy->currentNode->numPins; i++) {
-    newVal = digitalRead(teensy->currentNode->pins[i]);
+    newVal = digitalReadFast(teensy->currentNode->pins[i]);
     valDecreased = ((newVal - teensy->currentNode->pinVals[i]) < -(ADC_CHANGE_TOLERANCE));
     valIncreased = ((newVal - teensy->currentNode->pinVals[i]) > (ADC_CHANGE_TOLERANCE));
     if (valDecreased || valIncreased) {
@@ -216,7 +216,7 @@ int btnDebounce() {
   state = BTN_NONE;
   // set to new state if exists
   for (i = 0; i < NUM_BTNS; i++) {
-    if (digitalRead(i + START_BTN_PIN) == LOW) {
+    if (digitalReadFast(i + START_BTN_PIN) == LOW) {
       state = i + 1; // b/c btn states start at 1:BTN_0--4:BTN_3
     }
   }
