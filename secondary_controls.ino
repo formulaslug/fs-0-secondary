@@ -29,7 +29,7 @@ constexpr uint32_t ADC_CHANGE_TOLERANCE = 3;
 constexpr uint32_t SUCCESSFUL_PRESS_TIME = 100;
 
 constexpr uint32_t NUM_BTNS = 4;
-constexpr uint32_t START_BTN_PIN = 2;
+constexpr uint32_t START_BTN_PIN = 5;
 
 void _2hzTimer();
 void _50hzTimer();
