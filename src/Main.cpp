@@ -6,19 +6,14 @@
 // TODO: Need some button debounce
 
 #include <cstdint>
-#include <cstdio>
+
+#include <Arduino.h>
 #include <SPI.h>
 
 /* Available sizes: 8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 24, 28, 32, 40, 60,
  *                  72, 96
  */
 #include <font_Arial.h>
-/* ILI9341.h defines a swap macro that conflicts with the C++ standard library,
- * so this undefines it to avoid problems (it should be using the standard
- * library's std::swap() anyway...)
- */
-#undef swap
-
 #include "DashNode.h"
 #include "MenuNode.h"
 #include "Teensy.h"
