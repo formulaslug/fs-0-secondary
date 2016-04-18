@@ -10,10 +10,10 @@
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
- * 1. The above copyright notice and this permission notice shall be 
+ * 1. The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
  *
- * 2. If the Software is incorporated into a build system that allows 
+ * 2. If the Software is incorporated into a build system that allows
  * selection among a list of target devices, then similar target
  * devices manufactured by PJRC.COM must be included in the list of
  * target devices and selectable in the same manner.
@@ -33,16 +33,17 @@
 #include "usb_serial.h"
 #include "usb_seremu.h"
 
-void yield(void) __attribute__ ((weak));
-void yield(void)
-{
-	static uint8_t running=0;
+void yield(void) __attribute__((weak));
+void yield(void) {
+  static uint8_t running = 0;
 
-	if (running) return; // TODO: does this need to be atomic?
-	running = 1;
-	if (Serial.available()) serialEvent();
-	if (Serial1.available()) serialEvent1();
-	if (Serial2.available()) serialEvent2();
-	if (Serial3.available()) serialEvent3();
-	running = 0;
-};
+  if (running) {
+    return; // TODO: does this need to be atomic?
+  }
+  running = 1;
+  if (Serial.available()) {serialEvent(); }
+  if (Serial1.available()) {serialEvent1(); }
+  if (Serial2.available()) {serialEvent2(); }
+  if (Serial3.available()) {serialEvent3(); }
+  running = 0;
+}

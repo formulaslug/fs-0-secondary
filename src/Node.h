@@ -31,7 +31,8 @@ class Node {
 
   char name[k_maxNodeNameChars + 1] = {};
   NodeType m_nodeType = NodeType::None;
-  void (*drawFunc) (Node* node) = nullptr; // draw function pointer
+  void (* drawFunc)(Node* node) = nullptr; // draw function pointer
+
  public:
   std::vector<Node*> children;
   uint32_t childIndex = 0;

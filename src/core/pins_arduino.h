@@ -90,7 +90,7 @@ const static uint8_t SDA = 18;
 const static uint8_t SCL = 19;
 
 
-#define NUM_DIGITAL_PINS  CORE_NUM_DIGITAL
+#define NUM_DIGITAL_PINS CORE_NUM_DIGITAL
 #define NUM_ANALOG_INPUTS CORE_NUM_ANALOG
 
 
@@ -98,68 +98,90 @@ const static uint8_t SCL = 19;
 
 
 #if defined(__MK20DX128__)
-  #define analogInputToDigitalPin(p) (((p) <= 9) ? (p) + 14 : (((p) <= 13) ? (p) + 24 : -1))
-  #define digitalPinHasPWM(p) (((p) >= 3 && (p) <= 6) || (p) == 9 || (p) == 10 || ((p) >= 20 && (p) <= 23))
-  #define digitalPinToInterrupt(p)  ((p) < NUM_DIGITAL_PINS ? (p) : -1)
+  #define analogInputToDigitalPin(p) (((p) <= \
+  9) ? (p) + 14 : (((p) <= 13) ? (p) + 24 : -1))
+  #define digitalPinHasPWM(p) (((p) >= 3 && (p) <= 6) || (p) == 9 || \
+  (p) == 10 || ((p) >= 20 && (p) <= 23))
+  #define digitalPinToInterrupt(p) ((p) < NUM_DIGITAL_PINS ? (p) : -1)
 #elif defined(__MK20DX256__)
-  #define analogInputToDigitalPin(p) (((p) <= 9) ? (p) + 14 : (((p) <= 13) ? (p) + 24 : (((p) == 14) ? 40 : (((p) <= 20) ? (p) + 11 : -1))))
-  #define digitalPinHasPWM(p) (((p) >= 3 && (p) <= 6) || (p) == 9 || (p) == 10 || ((p) >= 20 && (p) <= 23) || (p) == 25 || (p) == 32)
-  #define digitalPinToInterrupt(p)  ((p) < NUM_DIGITAL_PINS ? (p) : -1)
+  #define analogInputToDigitalPin(p) (((p) <= \
+  9) ? (p) +                                  \
+  14 : (((p) <=                               \
+  13) ? (p) + 24 : (((p) == 14) ? 40 : (((p) <= 20) ? (p) + 11 : -1))))
+  #define digitalPinHasPWM(p) (((p) >= 3 && (p) <= 6) || (p) == 9 || \
+  (p) == 10 || ((p) >= 20 && (p) <= 23) || (p) == 25 || (p) == 32)
+  #define digitalPinToInterrupt(p) ((p) < NUM_DIGITAL_PINS ? (p) : -1)
 #elif defined(__MKL26Z64__)
-  #define analogInputToDigitalPin(p) (((p) <= 9) ? (p) + 14 : (((p) <= 12) ? (p) + 14 : -1))
-  #define digitalPinHasPWM(p) ((p) == 3 || (p) == 4 || (p) == 6 || (p) == 9 || (p) == 10 || (p) == 16 || (p) == 17 || (p) == 20 || (p) == 22 || (p) == 23)
-  #define digitalPinToInterrupt(p)  ((((p) >= 2 && (p) <= 15) || ((p) >= 20 && (p) <= 23)) ? (p) : -1)
+  #define analogInputToDigitalPin(p) (((p) <= \
+  9) ? (p) + 14 : (((p) <= 12) ? (p) + 14 : -1))
+  #define digitalPinHasPWM(p) ((p) == 3 || (p) == 4 || (p) == 6 || (p) == 9 || \
+  (p) == 10 || (p) == 16 || (p) == 17 || (p) == 20 || (p) == 22 ||             \
+  (p) == 23)
+  #define digitalPinToInterrupt(p) ((((p) >= 2 && (p) <= 15) || \
+  ((p) >= 20 && (p) <= 23)) ? (p) : -1)
 #elif defined(__MK64FX512__) || defined(__MK66FX1M0__)
-  #define analogInputToDigitalPin(p) (((p) <= 9) ? (p) + 14 : (((p) >= 12 && (p) <= 20) ? (p) + 19 : -1))
-  #define digitalPinHasPWM(p) (((p) >= 2 && (p) <= 10) || (p) == 14 || ((p) >= 20 && (p) <= 23) || (p) == 29 || (p) == 30 || ((p) >= 35 && (p) <= 38))
-  #define digitalPinToInterrupt(p)  ((p) < NUM_DIGITAL_PINS ? (p) : -1)
+  #define analogInputToDigitalPin(p) (((p) <= \
+  9) ? (p) + 14 : (((p) >= 12 && (p) <= 20) ? (p) + 19 : -1))
+  #define digitalPinHasPWM(p) (((p) >= 2 && (p) <= 10) || (p) == 14 || \
+  ((p) >= 20 && (p) <= 23) || (p) == 29 || (p) == 30 ||                \
+  ((p) >= 35 && (p) <= 38))
+  #define digitalPinToInterrupt(p) ((p) < NUM_DIGITAL_PINS ? (p) : -1)
 #endif
 
-#define digitalPinToPCICR(p)    ((volatile uint8_t *)0)
+#define digitalPinToPCICR(p) ((volatile uint8_t*) 0)
 #define digitalPinToPCICRbit(p) (0)
-#define digitalPinToPCIFR(p)    ((volatile uint8_t *)0)
+#define digitalPinToPCIFR(p) ((volatile uint8_t*) 0)
 #define digitalPinToPCIFRbit(p) (0)
-#define digitalPinToPCMSK(p)    ((volatile uint8_t *)0)
+#define digitalPinToPCMSK(p) ((volatile uint8_t*) 0)
 #define digitalPinToPCMSKbit(p) (0)
 
 
 #if defined(KINETISK)
 struct digital_pin_bitband_and_config_table_struct {
-        volatile uint32_t *reg;
-        volatile uint32_t *config;
+  volatile uint32_t* reg;
+  volatile uint32_t* config;
 };
-extern const struct digital_pin_bitband_and_config_table_struct digital_pin_to_info_PGM[];
+extern const struct digital_pin_bitband_and_config_table_struct
+    digital_pin_to_info_PGM[];
 // compatibility macros
-#define digitalPinToPort(pin) (pin)
-#define digitalPinToBitMask(pin) (1)
-#define portOutputRegister(pin) ((volatile uint8_t *)(digital_pin_to_info_PGM[(pin)].reg + 0))
-#define portSetRegister(pin)    ((volatile uint8_t *)(digital_pin_to_info_PGM[(pin)].reg + 32))
-#define portClearRegister(pin)  ((volatile uint8_t *)(digital_pin_to_info_PGM[(pin)].reg + 64))
-#define portToggleRegister(pin) ((volatile uint8_t *)(digital_pin_to_info_PGM[(pin)].reg + 96))
-#define portInputRegister(pin)  ((volatile uint8_t *)(digital_pin_to_info_PGM[(pin)].reg + 128))
-#define portModeRegister(pin)   ((volatile uint8_t *)(digital_pin_to_info_PGM[(pin)].reg + 160))
-#define portConfigRegister(pin) ((volatile uint32_t *)(digital_pin_to_info_PGM[(pin)].config))
-#define digitalPinToPortReg(pin) (portOutputRegister(pin))
-#define digitalPinToBit(pin) (1)
+  #define digitalPinToPort(pin) (pin)
+  #define digitalPinToBitMask(pin) (1)
+  #define portOutputRegister(pin) ((volatile uint8_t*) (digital_pin_to_info_PGM[( \
+    pin)].reg + 0))
+  #define portSetRegister(pin) ((volatile uint8_t*) (digital_pin_to_info_PGM[( \
+    pin)].reg + 32))
+  #define portClearRegister(pin) ((volatile uint8_t*) (digital_pin_to_info_PGM[( \
+    pin)].reg + 64))
+  #define portToggleRegister(pin) ((volatile uint8_t*) (digital_pin_to_info_PGM[( \
+    pin)].reg + 96))
+  #define portInputRegister(pin) ((volatile uint8_t*) (digital_pin_to_info_PGM[( \
+    pin)].reg + 128))
+  #define portModeRegister(pin) ((volatile uint8_t*) (digital_pin_to_info_PGM[( \
+    pin)].reg + 160))
+  #define portConfigRegister(pin) ((volatile uint32_t*) (digital_pin_to_info_PGM \
+  [(pin)].config))
+  #define digitalPinToPortReg(pin) (portOutputRegister(pin))
+  #define digitalPinToBit(pin) (1)
 
 #elif defined(KINETISL)
 struct digital_pin_bitband_and_config_table_struct {
-        volatile uint8_t *reg;
-        volatile uint32_t *config;
-	uint8_t mask;
+  volatile uint8_t* reg;
+  volatile uint32_t* config;
+  uint8_t mask;
 };
-extern const struct digital_pin_bitband_and_config_table_struct digital_pin_to_info_PGM[];
+extern const struct digital_pin_bitband_and_config_table_struct
+    digital_pin_to_info_PGM[];
 // compatibility macros
-#define digitalPinToPort(pin) (pin)
-#define digitalPinToBitMask(pin) (digital_pin_to_info_PGM[(pin)].mask)
-#define portOutputRegister(pin) ((digital_pin_to_info_PGM[(pin)].reg + 0))
-#define portSetRegister(pin)    ((digital_pin_to_info_PGM[(pin)].reg + 4))
-#define portClearRegister(pin)  ((digital_pin_to_info_PGM[(pin)].reg + 8))
-#define portToggleRegister(pin) ((digital_pin_to_info_PGM[(pin)].reg + 12))
-#define portInputRegister(pin)  ((digital_pin_to_info_PGM[(pin)].reg + 16))
-#define portModeRegister(pin)   ((digital_pin_to_info_PGM[(pin)].reg + 20))
-#define portConfigRegister(pin) ((digital_pin_to_info_PGM[(pin)].config))
-#define digitalPinToPortReg(pin) (portOutputRegister(pin))
+  #define digitalPinToPort(pin) (pin)
+  #define digitalPinToBitMask(pin) (digital_pin_to_info_PGM[(pin)].mask)
+  #define portOutputRegister(pin) ((digital_pin_to_info_PGM[(pin)].reg + 0))
+  #define portSetRegister(pin) ((digital_pin_to_info_PGM[(pin)].reg + 4))
+  #define portClearRegister(pin) ((digital_pin_to_info_PGM[(pin)].reg + 8))
+  #define portToggleRegister(pin) ((digital_pin_to_info_PGM[(pin)].reg + 12))
+  #define portInputRegister(pin) ((digital_pin_to_info_PGM[(pin)].reg + 16))
+  #define portModeRegister(pin) ((digital_pin_to_info_PGM[(pin)].reg + 20))
+  #define portConfigRegister(pin) ((digital_pin_to_info_PGM[(pin)].config))
+  #define digitalPinToPortReg(pin) (portOutputRegister(pin))
 //#define digitalPinToBit(pin) (1)
 
 #endif
@@ -167,13 +189,13 @@ extern const struct digital_pin_bitband_and_config_table_struct digital_pin_to_i
 
 
 #define NOT_ON_TIMER 0
-static inline uint8_t digitalPinToTimer(uint8_t) __attribute__((always_inline, unused));
-static inline uint8_t digitalPinToTimer(uint8_t pin)
-{
-	if (pin >= 3 && pin <= 6) return pin - 2;
-	if (pin >= 9 && pin <= 10) return pin - 4;
-	if (pin >= 20 && pin <= 23) return pin - 13;
-	return NOT_ON_TIMER;
+static inline uint8_t digitalPinToTimer(uint8_t) __attribute__((always_inline,
+    unused));
+static inline uint8_t digitalPinToTimer(uint8_t pin) {
+  if (pin >= 3 && pin <= 6) {return pin - 2; }
+  if (pin >= 9 && pin <= 10) {return pin - 4; }
+  if (pin >= 20 && pin <= 23) {return pin - 13; }
+  return NOT_ON_TIMER;
 }
 
 // These serial port names are intended to allow libraries and architecture-neutral
@@ -193,18 +215,18 @@ static inline uint8_t digitalPinToTimer(uint8_t pin)
 // pins are NOT connected to anything by default.
 //
 #if F_CPU >= 20000000 && !defined(USB_DISABLED)
-#define SERIAL_PORT_MONITOR		Serial
+  #define SERIAL_PORT_MONITOR Serial
 #else
-#define SERIAL_PORT_MONITOR		Serial1
+  #define SERIAL_PORT_MONITOR Serial1
 #endif
-#define SERIAL_PORT_USBVIRTUAL		Serial
-#define SERIAL_PORT_HARDWARE		Serial1
-#define SERIAL_PORT_HARDWARE1		Serial2
-#define SERIAL_PORT_HARDWARE2		Serial3
-#define SERIAL_PORT_HARDWARE_OPEN	Serial1
-#define SERIAL_PORT_HARDWARE_OPEN1	Serial2
-#define SERIAL_PORT_HARDWARE_OPEN2	Serial3
+#define SERIAL_PORT_USBVIRTUAL Serial
+#define SERIAL_PORT_HARDWARE Serial1
+#define SERIAL_PORT_HARDWARE1 Serial2
+#define SERIAL_PORT_HARDWARE2 Serial3
+#define SERIAL_PORT_HARDWARE_OPEN Serial1
+#define SERIAL_PORT_HARDWARE_OPEN1 Serial2
+#define SERIAL_PORT_HARDWARE_OPEN2 Serial3
 
-#define SerialUSB			Serial
+#define SerialUSB Serial
 
 #endif

@@ -33,7 +33,7 @@
 #include "core_pins.h"
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 #define PI 3.1415926535897932384626433832795
@@ -43,43 +43,46 @@ extern "C"{
 #define RAD_TO_DEG 57.295779513082320876798154814105
 
 #ifndef M_PI
-#define M_PI 3.1415926535897932384626433832795
+  #define M_PI 3.1415926535897932384626433832795
 #endif
 #ifndef M_SQRT2
-#define M_SQRT2 1.4142135623730950488016887
+  #define M_SQRT2 1.4142135623730950488016887
 #endif
 
-#define SERIAL  0
+#define SERIAL 0
 #define DISPLAY 1
 
-#define constrain(amt, low, high) ({ \
-  typeof(amt) _amt = (amt); \
-  typeof(low) _low = (low); \
-  typeof(high) _high = (high); \
-  (_amt < _low) ? _low : ((_amt > _high) ? _high : _amt); \
-})
-#define radians(deg) ((deg)*DEG_TO_RAD)
-#define degrees(rad) ((rad)*RAD_TO_DEG)
-#define sq(x) ({ \
-  typeof(x) _x = (x); \
-  _x * _x; \
-})
+#define constrain(amt, low, high) ({                        \
+    typeof(amt)_amt = (amt);                                \
+    typeof(low)_low = (low);                                \
+    typeof(high)_high = (high);                             \
+    (_amt < _low) ? _low : ((_amt > _high) ? _high : _amt); \
+  }                                                         \
+  )
+#define radians(deg) ((deg) * DEG_TO_RAD)
+#define degrees(rad) ((rad) * RAD_TO_DEG)
+#define sq(x) ({       \
+    typeof(x)_x = (x); \
+    _x* _x;            \
+  }                    \
+  )
 #define sei() __enable_irq()
 #define cli() __disable_irq()
 #define interrupts() __enable_irq()
 #define noInterrupts() __disable_irq()
 
-#define clockCyclesPerMicrosecond() ( F_CPU / 1000000L )
-#define clockCyclesToMicroseconds(a) ( (a) / clockCyclesPerMicrosecond() )
-#define microsecondsToClockCycles(a) ( (a) * clockCyclesPerMicrosecond() )
+#define clockCyclesPerMicrosecond() (F_CPU / 1000000L)
+#define clockCyclesToMicroseconds(a) ((a) / clockCyclesPerMicrosecond())
+#define microsecondsToClockCycles(a) ((a) * clockCyclesPerMicrosecond())
 
-#define lowByte(w) ((uint8_t)((w) & 0xFF))
-#define highByte(w) ((uint8_t)((w) >> 8))
+#define lowByte(w) ((uint8_t) ((w) & 0xFF))
+#define highByte(w) ((uint8_t) ((w) >> 8))
 
 #define bitRead(value, bit) (((value) >> (bit)) & 0x01)
 #define bitSet(value, bit) ((value) |= (1UL << (bit)))
 #define bitClear(value, bit) ((value) &= ~(1UL << (bit)))
-#define bitWrite(value, bit, bitvalue) (bitvalue ? bitSet(value, bit) : bitClear(value, bit))
+#define bitWrite(value, bit, \
+      bitvalue) (bitvalue ? bitSet(value, bit) : bitClear(value, bit))
 
 typedef unsigned int word;
 
@@ -109,8 +112,8 @@ void loop(void);
 typedef bool boolean;
 #else
 typedef uint8_t boolean;
-#define false 0
-#define true (!false)
+  #define false 0
+  #define true (!false)
 #endif
 
 #endif

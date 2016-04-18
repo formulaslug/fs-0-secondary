@@ -10,10 +10,10 @@
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
- * 1. The above copyright notice and this permission notice shall be 
+ * 1. The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
  *
- * 2. If the Software is incorporated into a build system that allows 
+ * 2. If the Software is incorporated into a build system that allows
  * selection among a list of target devices, then similar target
  * devices manufactured by PJRC.COM must be included in the list of
  * target devices and selectable in the same manner.
@@ -33,55 +33,55 @@
 
 #if F_CPU >= 20000000
 
-#ifdef CDC_DATA_INTERFACE
-#ifdef CDC_STATUS_INTERFACE
+  #ifdef CDC_DATA_INTERFACE
+    #ifdef CDC_STATUS_INTERFACE
 usb_serial_class Serial;
-#endif
-#endif
+    #endif
+  #endif
 
-#ifdef MIDI_INTERFACE
+  #ifdef MIDI_INTERFACE
 usb_midi_class usbMIDI;
-#endif
+  #endif
 
-#ifdef KEYBOARD_INTERFACE
+  #ifdef KEYBOARD_INTERFACE
 usb_keyboard_class Keyboard;
-#endif
+  #endif
 
-#ifdef MOUSE_INTERFACE
+  #ifdef MOUSE_INTERFACE
 usb_mouse_class Mouse;
-#endif
+  #endif
 
-#ifdef RAWHID_INTERFACE
+  #ifdef RAWHID_INTERFACE
 usb_rawhid_class RawHID;
-#endif
+  #endif
 
-#ifdef FLIGHTSIM_INTERFACE
+  #ifdef FLIGHTSIM_INTERFACE
 FlightSimClass FlightSim;
-#endif
+  #endif
 
-#ifdef SEREMU_INTERFACE
+  #ifdef SEREMU_INTERFACE
 usb_seremu_class Serial;
-#endif
+  #endif
 
-#ifdef JOYSTICK_INTERFACE
+  #ifdef JOYSTICK_INTERFACE
 usb_joystick_class Joystick;
 uint8_t usb_joystick_class::manual_mode = 0;
-#endif
+  #endif
 
-#ifdef USB_DISABLED
+  #ifdef USB_DISABLED
 usb_serial_class Serial;
-#endif
+  #endif
 
 
 #else // F_CPU < 20 MHz
 
-#if defined(USB_SERIAL) || defined(USB_SERIAL_HID)
+  #if defined(USB_SERIAL) || defined(USB_SERIAL_HID)
 usb_serial_class Serial;
-#elif (USB_DISABLED)
+  #elif (USB_DISABLED)
 usb_serial_class Serial;
-#else
+  #else
 usb_seremu_class Serial;
-#endif
+  #endif
 
 #endif // F_CPU
 

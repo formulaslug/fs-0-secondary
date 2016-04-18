@@ -28,81 +28,84 @@ extern "C" {
 #endif
 
 class IntervalTimer {
-  private:
-    typedef void (*ISR)();
-    typedef volatile uint32_t* reg;
-    enum {TIMER_OFF, TIMER_PIT};
+ private:
+  typedef void (* ISR)();
+  typedef volatile uint32_t* reg;
+  enum {TIMER_OFF, TIMER_PIT};
 #if defined(KINETISK)
-    static const uint8_t NUM_PIT = 4;
+  static const uint8_t NUM_PIT = 4;
 #elif defined(KINETISL)
-    static const uint8_t NUM_PIT = 2;
+  static const uint8_t NUM_PIT = 2;
 #endif
-    static const uint32_t MAX_PERIOD = UINT32_MAX / (F_BUS / 1000000.0);
-    static void enable_PIT();
-    static void disable_PIT();
-    static bool PIT_enabled;
-    static bool PIT_used[NUM_PIT];
-    static ISR PIT_ISR[NUM_PIT];
-    bool allocate_PIT(uint32_t newValue);
-    void start_PIT(uint32_t newValue);
-    void stop_PIT();
-    bool status;
-    uint8_t PIT_id;
-    reg PIT_LDVAL;
-    reg PIT_TCTRL;
-    uint8_t IRQ_PIT_CH;
-    uint8_t nvic_priority;
-    ISR myISR;
-    bool beginCycles(ISR newISR, uint32_t cycles);
-  public:
-    IntervalTimer() { status = TIMER_OFF; nvic_priority = 128; }
-    ~IntervalTimer() { end(); }
-    bool begin(ISR newISR, unsigned int newPeriod) {
-	if (newPeriod == 0 || newPeriod > MAX_PERIOD) return false;
-	uint32_t newValue = (F_BUS / 1000000) * newPeriod - 1;
-	return beginCycles(newISR, newValue);
-    }
-    bool begin(ISR newISR, int newPeriod) {
-	if (newPeriod < 0) return false;
-	return begin(newISR, (unsigned int)newPeriod);
-    }
-    bool begin(ISR newISR, unsigned long newPeriod) {
-	return begin(newISR, (unsigned int)newPeriod);
-    }
-    bool begin(ISR newISR, long newPeriod) {
-	return begin(newISR, (int)newPeriod);
-    }
-    bool begin(ISR newISR, float newPeriod) {
-	if (newPeriod <= 0 || newPeriod > MAX_PERIOD) return false;
-	uint32_t newValue = (float)(F_BUS / 1000000) * newPeriod - 0.5;
-	if (newValue < 40) return false;
-	return beginCycles(newISR, newValue);
-    }
-    bool begin(ISR newISR, double newPeriod) {
-	return begin(newISR, (float)newPeriod);
-    }
-    void end();
-    void priority(uint8_t n) {
-	nvic_priority = n;
-	if (PIT_enabled) NVIC_SET_PRIORITY(IRQ_PIT_CH, n);
-    }
-    operator IRQ_NUMBER_t() {
-        if (PIT_enabled) {
+  static const uint32_t MAX_PERIOD = UINT32_MAX / (F_BUS / 1000000.0);
+  static void enable_PIT();
+  static void disable_PIT();
+  static bool PIT_enabled;
+  static bool PIT_used[NUM_PIT];
+  static ISR PIT_ISR[NUM_PIT];
+  bool allocate_PIT(uint32_t newValue);
+  void start_PIT(uint32_t newValue);
+  void stop_PIT();
+  bool status;
+  uint8_t PIT_id;
+  reg PIT_LDVAL;
+  reg PIT_TCTRL;
+  uint8_t IRQ_PIT_CH;
+  uint8_t nvic_priority;
+  ISR myISR;
+  bool beginCycles(ISR newISR, uint32_t cycles);
+
+ public:
+  IntervalTimer() { status = TIMER_OFF; nvic_priority = 128; }
+  ~IntervalTimer() { end(); }
+  bool begin(ISR newISR, unsigned int newPeriod) {
+    if (newPeriod == 0 || newPeriod > MAX_PERIOD) { return false; }
+    uint32_t newValue = (F_BUS / 1000000) * newPeriod - 1;
+    return beginCycles(newISR, newValue);
+  }
+  bool begin(ISR newISR, int newPeriod) {
+    if (newPeriod < 0) { return false; }
+    return begin(newISR, (unsigned int) newPeriod);
+  }
+  bool begin(ISR newISR, unsigned long newPeriod) {
+    return begin(newISR, (unsigned int) newPeriod);
+  }
+  bool begin(ISR newISR, long newPeriod) {
+    return begin(newISR, (int) newPeriod);
+  }
+  bool begin(ISR newISR, float newPeriod) {
+    if (newPeriod <= 0 || newPeriod > MAX_PERIOD) { return false; }
+    uint32_t newValue = (float) (F_BUS / 1000000) * newPeriod - 0.5;
+    if (newValue < 40) { return false; }
+    return beginCycles(newISR, newValue);
+  }
+  bool begin(ISR newISR, double newPeriod) {
+    return begin(newISR, (float) newPeriod);
+  }
+  void end();
+  void priority(uint8_t n) {
+    nvic_priority = n;
+    if (PIT_enabled) { NVIC_SET_PRIORITY(IRQ_PIT_CH, n); }
+  }
+  operator IRQ_NUMBER_t() {
+    if (PIT_enabled) {
 #if defined(KINETISK)
-            return (IRQ_NUMBER_t)(IRQ_PIT_CH + PIT_id);
+      return (IRQ_NUMBER_t) (IRQ_PIT_CH + PIT_id);
+
 #elif defined(KINETISL)
-            return IRQ_PIT;
+      return IRQ_PIT;
+
 #endif
-        }
-        return (IRQ_NUMBER_t)NVIC_NUM_INTERRUPTS;
     }
+    return (IRQ_NUMBER_t) NVIC_NUM_INTERRUPTS;
+  }
 #if defined(KINETISK)
-    friend void pit0_isr();
-    friend void pit1_isr();
-    friend void pit2_isr();
-    friend void pit3_isr();
+  friend void pit0_isr();
+  friend void pit1_isr();
+  friend void pit2_isr();
+  friend void pit3_isr();
 #elif defined(KINETISL)
-    friend void pit_isr();
+  friend void pit_isr();
 #endif
 };
 

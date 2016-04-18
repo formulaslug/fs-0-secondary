@@ -7,14 +7,12 @@
 #include "wiring.h"
 
 #ifndef cbi
-#define cbi(sfr, bit) ((sfr) &= ~_BV(bit))
+  #define cbi(sfr, bit) ((sfr) &= ~_BV(bit))
 #endif
 #ifndef sbi
-#define sbi(sfr, bit) ((sfr) |= _BV(bit))
+  #define sbi(sfr, bit) ((sfr) |= _BV(bit))
 #endif
 
-typedef void (*voidFuncPtr)(void);
+typedef void (* voidFuncPtr)(void);
 
 #endif
-
-

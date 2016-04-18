@@ -22,7 +22,7 @@
 
 #ifdef __cplusplus
 
-#include "new.h"
+  #include "new.h"
 
 class Print;
 
@@ -31,10 +31,9 @@ class Print;
     for users to print out instances of this class by passing them into the usual
     Print::print and Print::println methods.
 */
-class Printable
-{
-  public:
-    virtual size_t printTo(Print& p) const = 0;
+class Printable {
+ public:
+  virtual size_t printTo(Print& p) const = 0;
 };
 
 

@@ -41,7 +41,7 @@ int main() {
 
   // Instantiate display obj and properties; use hardware SPI (#13, #12, #11)
   ILI9341_t3 tft[2] = {ILI9341_t3(TFT_0_CS, TFT_0_DC),
-                              ILI9341_t3(TFT_1_CS, TFT_1_DC)};
+                       ILI9341_t3(TFT_1_CS, TFT_1_DC)};
   /* ILI9341_t3 tft = ILI9341_t3(TFT_0_CS, TFT_0_DC); */
 
   IntervalTimer interval50hz;
@@ -93,8 +93,8 @@ int main() {
   interval50hz.begin(_50hzTimer, 20000);
   /* interval2hz.begin(_2hzTimer, 500000); */
 
-  while(1) {
-    switch(teensy->displayState) {
+  while (1) {
+    switch (teensy->displayState) {
       // displaying dash only
       case DisplayState::Dash:
         // check if should redraw screen
@@ -129,16 +129,19 @@ int main() {
             if (teensy->currentNode->childIndex > 0) {
               teensy->currentNode->childIndex--;
             } else {
-              teensy->currentNode->childIndex = teensy->currentNode->children.size() - 1;
+              teensy->currentNode->childIndex =
+                  teensy->currentNode->children.size() - 1;
             }
             teensy->redrawScreen = true;
             teensy->btnPress = BTN_NONE; // reset btn press
             break;
           case BTN_1: // right..into child
             // make sure node has children
-            if (teensy->currentNode->children[teensy->currentNode->childIndex]->children.size() > 0) {
+            if (teensy->currentNode->children[teensy->currentNode->childIndex]->
+                children.size() > 0) {
               // move to the new node
-              teensy->currentNode = teensy->currentNode->children[teensy->currentNode->childIndex];
+              teensy->currentNode =
+                  teensy->currentNode->children[teensy->currentNode->childIndex];
               teensy->redrawScreen = true;
             } else {
               // (should show that item has no children)
@@ -146,7 +149,8 @@ int main() {
             teensy->btnPress = BTN_NONE; // reset btn press
             break;
           case BTN_2: // down..forward through child highlighted
-            if (teensy->currentNode->childIndex == teensy->currentNode->children.size() - 1) {
+            if (teensy->currentNode->childIndex ==
+                teensy->currentNode->children.size() - 1) {
               teensy->currentNode->childIndex = 0;
             } else {
               teensy->currentNode->childIndex++;
@@ -178,8 +182,10 @@ void _2hzTimer() {
   // @desc Check if node's observed pins changed in value and must re-render
   for (i = 0; i < teensy->currentNode->numPins; i++) {
     newVal = digitalReadFast(teensy->currentNode->pins[i]);
-    valDecreased = ((newVal - teensy->currentNode->pinVals[i]) < -(ADC_CHANGE_TOLERANCE));
-    valIncreased = ((newVal - teensy->currentNode->pinVals[i]) > (ADC_CHANGE_TOLERANCE));
+    valDecreased =
+        ((newVal - teensy->currentNode->pinVals[i]) < -(ADC_CHANGE_TOLERANCE));
+    valIncreased =
+        ((newVal - teensy->currentNode->pinVals[i]) > (ADC_CHANGE_TOLERANCE));
     if (valDecreased || valIncreased) {
       // pin/adc val changed by more than ADC_CHANGE_TOLERANCE
       teensy->currentNode->pinVals[i] = newVal;

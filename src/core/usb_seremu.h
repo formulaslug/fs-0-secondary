@@ -35,101 +35,104 @@
 
 #if defined(SEREMU_INTERFACE)
 
-#include <inttypes.h>
+  #include <inttypes.h>
 
-#if F_CPU >= 20000000
+  #if F_CPU >= 20000000
 
 // C language implementation
-#ifdef __cplusplus
+    #ifdef __cplusplus
 extern "C" {
-#endif
+    #endif
 int usb_seremu_getchar(void);
 int usb_seremu_peekchar(void);
 int usb_seremu_available(void);
 void usb_seremu_flush_input(void);
 int usb_seremu_putchar(uint8_t c);
-int usb_seremu_write(const void *buffer, uint32_t size);
+int usb_seremu_write(const void* buffer, uint32_t size);
 int usb_seremu_write_buffer_free(void);
 void usb_seremu_flush_output(void);
 void usb_seremu_flush_callback(void);
 extern volatile uint8_t usb_seremu_transmit_flush_timer;
 extern volatile uint8_t usb_configuration;
-#ifdef __cplusplus
+    #ifdef __cplusplus
 }
-#endif
+    #endif
 
 // C++ interface
-#ifdef __cplusplus
-#include "Stream.h"
-class usb_seremu_class : public Stream
-{
-public:
-        void begin(long) { /* TODO: call a function that tries to wait for enumeration */ };
-        void end() { /* TODO: flush output and shut down USB port */ };
-        virtual int available() { return usb_seremu_available(); }
-        virtual int read() { return usb_seremu_getchar(); }
-        virtual int peek() { return usb_seremu_peekchar(); }
-        virtual void flush() { usb_seremu_flush_output(); }
-        virtual size_t write(uint8_t c) { return usb_seremu_putchar(c); }
-        virtual size_t write(const uint8_t *buffer, size_t size) { return usb_seremu_write(buffer, size); }
-        size_t write(unsigned long n) { return write((uint8_t)n); }
-        size_t write(long n) { return write((uint8_t)n); }
-        size_t write(unsigned int n) { return write((uint8_t)n); }
-        size_t write(int n) { return write((uint8_t)n); }
-	int availableForWrite() { return usb_seremu_write_buffer_free(); }
-	using Print::write;
-        void send_now(void) { usb_seremu_flush_output(); };
-        uint32_t baud(void) { return 9600; }
-        uint8_t stopbits(void) { return 1; }
-        uint8_t paritytype(void) { return 0; }
-        uint8_t numbits(void) { return 8; }
-        uint8_t dtr(void) { return 1; }
-        uint8_t rts(void) { return 1; }
-        operator bool() { return usb_configuration; }
+    #ifdef __cplusplus
+      #include "Stream.h"
+class usb_seremu_class : public Stream {
+ public:
+  void begin(long) { /* TODO: call a function that tries to wait for enumeration */ }
+  void end() { /* TODO: flush output and shut down USB port */ }
+  virtual int available() { return usb_seremu_available(); }
+  virtual int read() { return usb_seremu_getchar(); }
+  virtual int peek() { return usb_seremu_peekchar(); }
+  virtual void flush() { usb_seremu_flush_output(); }
+  virtual size_t write(uint8_t c) { return usb_seremu_putchar(c); }
+  virtual size_t write(const uint8_t* buffer,
+      size_t size) { return usb_seremu_write(buffer, size); }
+  size_t write(unsigned long n) { return write((uint8_t) n); }
+  size_t write(long n) { return write((uint8_t) n); }
+  size_t write(unsigned int n) { return write((uint8_t) n); }
+  size_t write(int n) { return write((uint8_t) n); }
+  int availableForWrite() { return usb_seremu_write_buffer_free(); }
+  using Print::write;
+  void send_now(void) { usb_seremu_flush_output(); }
+  uint32_t baud(void) { return 9600; }
+  uint8_t stopbits(void) { return 1; }
+  uint8_t paritytype(void) { return 0; }
+  uint8_t numbits(void) { return 8; }
+  uint8_t dtr(void) { return 1; }
+  uint8_t rts(void) { return 1; }
+  operator bool() {
+    return usb_configuration;
+  }
 };
 extern usb_seremu_class Serial;
 extern void serialEvent(void);
-#endif // __cplusplus
+    #endif // __cplusplus
 
 
 
-#else  // F_CPU < 20 MHz
+  #else  // F_CPU < 20 MHz
 
 // Allow Arduino programs using Serial to compile, but Serial will do nothing.
-#ifdef __cplusplus
-#include "Stream.h"
-class usb_seremu_class : public Stream
-{
-public:
-	void begin(long) { };
-	void end() { };
-	virtual int available() { return 0; }
-	virtual int read() { return -1; }
-	virtual int peek() { return -1; }
-	virtual void flush() { }
-	virtual size_t write(uint8_t c) { return 1; }
-	virtual size_t write(const uint8_t *buffer, size_t size) { return size; }
-	size_t write(unsigned long n) { return 1; }
-	size_t write(long n) { return 1; }
-	size_t write(unsigned int n) { return 1; }
-	size_t write(int n) { return 1; }
-	int availableForWrite() { return 0; }
-	using Print::write;
-	void send_now(void) { }
-	uint32_t baud(void) { return 0; }
-	uint8_t stopbits(void) { return 1; }
-	uint8_t paritytype(void) { return 0; }
-	uint8_t numbits(void) { return 8; }
-	uint8_t dtr(void) { return 1; }
-	uint8_t rts(void) { return 1; }
-	operator bool() { return true; }
+    #ifdef __cplusplus
+      #include "Stream.h"
+class usb_seremu_class : public Stream {
+ public:
+  void begin(long) {}
+  void end() {}
+  virtual int available() { return 0; }
+  virtual int read() { return -1; }
+  virtual int peek() { return -1; }
+  virtual void flush() {}
+  virtual size_t write(uint8_t c) { return 1; }
+  virtual size_t write(const uint8_t* buffer, size_t size) { return size; }
+  size_t write(unsigned long n) { return 1; }
+  size_t write(long n) { return 1; }
+  size_t write(unsigned int n) { return 1; }
+  size_t write(int n) { return 1; }
+  int availableForWrite() { return 0; }
+  using Print::write;
+  void send_now(void) {}
+  uint32_t baud(void) { return 0; }
+  uint8_t stopbits(void) { return 1; }
+  uint8_t paritytype(void) { return 0; }
+  uint8_t numbits(void) { return 8; }
+  uint8_t dtr(void) { return 1; }
+  uint8_t rts(void) { return 1; }
+  operator bool() {
+    return true;
+  }
 };
 
 extern usb_seremu_class Serial;
 extern void serialEvent(void);
-#endif // __cplusplus
+    #endif // __cplusplus
 
-#endif // F_CPU
+  #endif // F_CPU
 
 #endif // SEREMU_INTERFACE
 

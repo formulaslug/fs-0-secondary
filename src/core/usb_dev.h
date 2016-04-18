@@ -41,82 +41,82 @@
 // provided by usb_dev.c are meant to be called only by
 // code which provides higher-level interfaces to the user.
 
-#include "usb_mem.h"
+  #include "usb_mem.h"
 
-#ifdef __cplusplus
+  #ifdef __cplusplus
 extern "C" {
-#endif
+  #endif
 
 void usb_init(void);
 void usb_init_serialnumber(void);
 void usb_isr(void);
-usb_packet_t *usb_rx(uint32_t endpoint);
+usb_packet_t* usb_rx(uint32_t endpoint);
 uint32_t usb_tx_byte_count(uint32_t endpoint);
 uint32_t usb_tx_packet_count(uint32_t endpoint);
-void usb_tx(uint32_t endpoint, usb_packet_t *packet);
-void usb_tx_isr(uint32_t endpoint, usb_packet_t *packet);
+void usb_tx(uint32_t endpoint, usb_packet_t* packet);
+void usb_tx_isr(uint32_t endpoint, usb_packet_t* packet);
 
 extern volatile uint8_t usb_configuration;
 
 extern uint16_t usb_rx_byte_count_data[NUM_ENDPOINTS];
-static inline uint32_t usb_rx_byte_count(uint32_t endpoint) __attribute__((always_inline));
-static inline uint32_t usb_rx_byte_count(uint32_t endpoint)
-{
-        endpoint--;
-        if (endpoint >= NUM_ENDPOINTS) return 0;
-        return usb_rx_byte_count_data[endpoint];
+static inline uint32_t usb_rx_byte_count(uint32_t endpoint) __attribute__((
+      always_inline));
+static inline uint32_t usb_rx_byte_count(uint32_t endpoint) {
+  endpoint--;
+  if (endpoint >= NUM_ENDPOINTS) { return 0; }
+  return usb_rx_byte_count_data[endpoint];
 }
 
-#ifdef CDC_DATA_INTERFACE
+  #ifdef CDC_DATA_INTERFACE
 extern uint32_t usb_cdc_line_coding[2];
 extern volatile uint32_t usb_cdc_line_rtsdtr_millis;
 extern volatile uint32_t systick_millis_count;
 extern volatile uint8_t usb_cdc_line_rtsdtr;
 extern volatile uint8_t usb_cdc_transmit_flush_timer;
 extern void usb_serial_flush_callback(void);
-#endif
+  #endif
 
-#ifdef SEREMU_INTERFACE
+  #ifdef SEREMU_INTERFACE
 extern volatile uint8_t usb_seremu_transmit_flush_timer;
 extern void usb_seremu_flush_callback(void);
-#endif
+  #endif
 
-#ifdef KEYBOARD_INTERFACE
+  #ifdef KEYBOARD_INTERFACE
 extern uint8_t keyboard_modifier_keys;
 extern uint8_t keyboard_keys[6];
 extern uint8_t keyboard_protocol;
 extern uint8_t keyboard_idle_config;
 extern uint8_t keyboard_idle_count;
 extern volatile uint8_t keyboard_leds;
-#endif
+  #endif
 
-#ifdef MIDI_INTERFACE
+  #ifdef MIDI_INTERFACE
 extern void usb_midi_flush_output(void);
-#endif
+  #endif
 
-#ifdef FLIGHTSIM_INTERFACE
+  #ifdef FLIGHTSIM_INTERFACE
 extern void usb_flightsim_flush_callback(void);
-#endif
+  #endif
 
 
 
 
 
-#ifdef __cplusplus
+  #ifdef __cplusplus
 }
-#endif
+  #endif
 
 #else // F_CPU < 20000000
 
-#ifdef __cplusplus
+  #ifdef __cplusplus
 extern "C" {
-#endif
+  #endif
 
 void usb_init(void);
 
-#ifdef __cplusplus
+  #ifdef __cplusplus
 }
-#endif
+  #endif
 
 
 #endif // F_CPU

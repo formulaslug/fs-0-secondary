@@ -40,8 +40,6 @@ uint8_t SPCR1emulation::pinout = 0;
 #ifdef HAS_SPIFIFO
 
 uint8_t SPIFIFOclass::pcs = 0;
-volatile uint8_t * SPIFIFOclass::reg = 0;
+volatile uint8_t* SPIFIFOclass::reg = 0;
 
 #endif
-
-

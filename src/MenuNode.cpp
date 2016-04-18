@@ -7,8 +7,7 @@
  */
 #include <font_Arial.h>
 
-MenuNode::MenuNode(const char* nameStr) : Node(nameStr) {
-}
+MenuNode::MenuNode(const char* nameStr) : Node(nameStr) {}
 
 void MenuNode::draw(Display* displays) {
   // display 1
@@ -30,16 +29,17 @@ void MenuNode::draw(Display* displays) {
     }
   }
 
-  /* char num = node->childIndex + '0'; */
-  /* displays[0].setCursor(100,170); */
-  /* displays[0].print({num}); */
+  /*
+   * char num = node->childIndex + '0';
+   * displays[0].setCursor(100,170);
+   * displays[0].print({num});
+   */
   // display 2
   displays[1].fillScreen(ILI9341_BLACK);
-  displays[1].setCursor(10,10);
+  displays[1].setCursor(10, 10);
   displays[1].setFont(Arial_20);
 
   char str[30];
   sprintf(str, "[This is <%s> node data]", children[childIndex]->name);
   displays[1].print(str);
-
 }

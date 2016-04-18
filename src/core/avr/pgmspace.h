@@ -26,7 +26,7 @@
 #include <inttypes.h>
 
 #define PROGMEM
-#define PGM_P  const char *
+#define PGM_P const char*
 #define PSTR(str) (str)
 
 #define _SFR_BYTE(n) (n)
@@ -57,7 +57,7 @@ typedef uint64_t prog_uint64_t;
 #define strcasestr_P(a, b) strcasestr((a), (b))
 #define strlcat_P(dest, src, len) strlcat((dest), (src), (len))
 #define strlcpy_P(dest, src, len) strlcpy((dest), (src), (len))
-#define strlen_P(s) strlen((const char *)(s))
+#define strlen_P(s) strlen((const char*) (s))
 #define strnlen_P(str, len) strnlen((str), (len))
 #define strncmp_P(a, b, n) strncmp((a), (b), (n))
 #define strncasecmp_P(a, b, n) strncasecmp((a), (b), (n))
@@ -76,10 +76,10 @@ typedef uint64_t prog_uint64_t;
 #define vsnprintf_P(s, n, ...) vsnprintf((s), (n), __VA_ARGS__)
 #define fprintf_P(fp, ...) fprintf((fp), __VA_ARGS__)
 
-#define pgm_read_byte(addr) (*(const unsigned char *)(addr))
-#define pgm_read_word(addr) (*(const unsigned short *)(addr))
-#define pgm_read_dword(addr) (*(const unsigned long *)(addr))
-#define pgm_read_float(addr) (*(const float *)(addr))
+#define pgm_read_byte(addr) (*(const unsigned char*) (addr))
+#define pgm_read_word(addr) (*(const unsigned short*) (addr))
+#define pgm_read_dword(addr) (*(const unsigned long*) (addr))
+#define pgm_read_float(addr) (*(const float*) (addr))
 
 #define pgm_read_byte_near(addr) pgm_read_byte(addr)
 #define pgm_read_word_near(addr) pgm_read_word(addr)

@@ -6,8 +6,7 @@
 #include <font_Arial.h>
 
 DashNode::DashNode(const char* nameStr) :
-    Node(nameStr) {
-}
+  Node(nameStr) {}
 
 void DashNode::draw(Display* displays) {
   // display 1

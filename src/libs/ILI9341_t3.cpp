@@ -25,13 +25,17 @@
 // At all other speeds, SPI.beginTransaction() will use the fastest available clock
 #define SPICLOCK 30000000
 
-#define WIDTH  ILI9341_TFTWIDTH
+#define WIDTH ILI9341_TFTWIDTH
 #define HEIGHT ILI9341_TFTHEIGHT
 
 // Constructor when using hardware SPI.  Faster, but must use SPI pins
 // specific to each board type (e.g. 11,13 for Uno, 51,52 for Mega, etc.)
-ILI9341_t3::ILI9341_t3(uint8_t cs, uint8_t dc, uint8_t rst, uint8_t mosi, uint8_t sclk, uint8_t miso)
-{
+ILI9341_t3::ILI9341_t3(uint8_t cs,
+    uint8_t dc,
+    uint8_t rst,
+    uint8_t mosi,
+    uint8_t sclk,
+    uint8_t miso) {
   _cs   = cs;
   _dc   = dc;
   _rst  = rst;
@@ -48,24 +52,24 @@ ILI9341_t3::ILI9341_t3(uint8_t cs, uint8_t dc, uint8_t rst, uint8_t mosi, uint8_
   font      = NULL;
 }
 
-void ILI9341_t3::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
-{
+void ILI9341_t3::setAddrWindow(uint16_t x0,
+    uint16_t y0,
+    uint16_t x1,
+    uint16_t y1) {
   SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
   setAddr(x0, y0, x1, y1);
   writecommand_last(ILI9341_RAMWR); // write to RAM
   SPI.endTransaction();
 }
 
-void ILI9341_t3::pushColor(uint16_t color)
-{
+void ILI9341_t3::pushColor(uint16_t color) {
   SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
   writedata16_last(color);
   SPI.endTransaction();
 }
 
 void ILI9341_t3::drawPixel(int16_t x, int16_t y, uint16_t color) {
-
-  if((x < 0) ||(x >= _width) || (y < 0) || (y >= _height)) return;
+  if ((x < 0) || (x >= _width) || (y < 0) || (y >= _height)) {return; }
 
   SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
   setAddr(x, y, x, y);
@@ -74,13 +78,13 @@ void ILI9341_t3::drawPixel(int16_t x, int16_t y, uint16_t color) {
   SPI.endTransaction();
 }
 
-void ILI9341_t3::drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color)
-{
+void ILI9341_t3::drawFastVLine(int16_t x, int16_t y, int16_t h,
+    uint16_t color) {
   // Rudimentary clipping
-  if((x >= _width) || (y >= _height)) return;
-  if((y+h-1) >= _height) h = _height-y;
+  if ((x >= _width) || (y >= _height)) {return; }
+  if ((y + h - 1) >= _height) {h = _height - y; }
   SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
-  setAddr(x, y, x, y+h-1);
+  setAddr(x, y, x, y + h - 1);
   writecommand_cont(ILI9341_RAMWR);
   while (h-- > 1) {
     writedata16_cont(color);
@@ -89,13 +93,13 @@ void ILI9341_t3::drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color)
   SPI.endTransaction();
 }
 
-void ILI9341_t3::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color)
-{
+void ILI9341_t3::drawFastHLine(int16_t x, int16_t y, int16_t w,
+    uint16_t color) {
   // Rudimentary clipping
-  if((x >= _width) || (y >= _height)) return;
-  if((x+w-1) >= _width)  w = _width-x;
+  if ((x >= _width) || (y >= _height)) {return; }
+  if ((x + w - 1) >= _width) {w = _width - x; }
   SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
-  setAddr(x, y, x+w-1, y);
+  setAddr(x, y, x + w - 1, y);
   writecommand_cont(ILI9341_RAMWR);
   while (w-- > 1) {
     writedata16_cont(color);
@@ -104,27 +108,29 @@ void ILI9341_t3::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color)
   SPI.endTransaction();
 }
 
-void ILI9341_t3::fillScreen(uint16_t color)
-{
+void ILI9341_t3::fillScreen(uint16_t color) {
   fillRect(0, 0, _width, _height, color);
 }
 
 // fill a rectangle
-void ILI9341_t3::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
-{
+void ILI9341_t3::fillRect(int16_t x,
+    int16_t y,
+    int16_t w,
+    int16_t h,
+    uint16_t color) {
   // rudimentary clipping (drawChar w/big text requires this)
-  if((x >= _width) || (y >= _height)) return;
-  if((x + w - 1) >= _width)  w = _width  - x;
-  if((y + h - 1) >= _height) h = _height - y;
+  if ((x >= _width) || (y >= _height)) {return; }
+  if ((x + w - 1) >= _width) {w = _width  - x; }
+  if ((y + h - 1) >= _height) {h = _height - y; }
 
   // TODO: this can result in a very long transaction time
   // should break this into multiple transactions, even though
   // it'll cost more overhead, so we don't stall other SPI libs
   SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
-  setAddr(x, y, x+w-1, y+h-1);
+  setAddr(x, y, x + w - 1, y + h - 1);
   writecommand_cont(ILI9341_RAMWR);
-  for(y=h; y>0; y--) {
-    for(x=w; x>1; x--) {
+  for (y = h; y > 0; y--) {
+    for (x = w; x > 1; x--) {
       writedata16_cont(color);
     }
     writedata16_last(color);
@@ -138,56 +144,53 @@ void ILI9341_t3::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t c
 
 
 
-#define MADCTL_MY  0x80
-#define MADCTL_MX  0x40
-#define MADCTL_MV  0x20
-#define MADCTL_ML  0x10
+#define MADCTL_MY 0x80
+#define MADCTL_MX 0x40
+#define MADCTL_MV 0x20
+#define MADCTL_ML 0x10
 #define MADCTL_RGB 0x00
 #define MADCTL_BGR 0x08
-#define MADCTL_MH  0x04
+#define MADCTL_MH 0x04
 
-void ILI9341_t3::setRotation(uint8_t m)
-{
+void ILI9341_t3::setRotation(uint8_t m) {
   rotation = m % 4; // can't be higher than 3
   SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
   writecommand_cont(ILI9341_MADCTL);
   switch (rotation) {
-  case 0:
-    writedata8_last(MADCTL_MX | MADCTL_BGR);
-    _width  = ILI9341_TFTWIDTH;
-    _height = ILI9341_TFTHEIGHT;
-    break;
-  case 1:
-    writedata8_last(MADCTL_MV | MADCTL_BGR);
-    _width  = ILI9341_TFTHEIGHT;
-    _height = ILI9341_TFTWIDTH;
-    break;
-  case 2:
-    writedata8_last(MADCTL_MY | MADCTL_BGR);
-    _width  = ILI9341_TFTWIDTH;
-    _height = ILI9341_TFTHEIGHT;
-    break;
-  case 3:
-    writedata8_last(MADCTL_MX | MADCTL_MY | MADCTL_MV | MADCTL_BGR);
-    _width  = ILI9341_TFTHEIGHT;
-    _height = ILI9341_TFTWIDTH;
-    break;
+    case 0:
+      writedata8_last(MADCTL_MX | MADCTL_BGR);
+      _width  = ILI9341_TFTWIDTH;
+      _height = ILI9341_TFTHEIGHT;
+      break;
+    case 1:
+      writedata8_last(MADCTL_MV | MADCTL_BGR);
+      _width  = ILI9341_TFTHEIGHT;
+      _height = ILI9341_TFTWIDTH;
+      break;
+    case 2:
+      writedata8_last(MADCTL_MY | MADCTL_BGR);
+      _width  = ILI9341_TFTWIDTH;
+      _height = ILI9341_TFTHEIGHT;
+      break;
+    case 3:
+      writedata8_last(MADCTL_MX | MADCTL_MY | MADCTL_MV | MADCTL_BGR);
+      _width  = ILI9341_TFTHEIGHT;
+      _height = ILI9341_TFTWIDTH;
+      break;
   }
   SPI.endTransaction();
   cursor_x = 0;
   cursor_y = 0;
 }
 
-void ILI9341_t3::setScroll(uint16_t offset)
-{
+void ILI9341_t3::setScroll(uint16_t offset) {
   SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
   writecommand_cont(ILI9341_VSCRSADD);
   writedata16_last(offset);
   SPI.endTransaction();
 }
 
-void ILI9341_t3::invertDisplay(boolean i)
-{
+void ILI9341_t3::invertDisplay(boolean i) {
   SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
   writecommand_last(i ? ILI9341_INVON : ILI9341_INVOFF);
   SPI.endTransaction();
@@ -210,14 +213,14 @@ uint8_t ILI9341_t3::readdata(void)
        // First wait until output queue is empty
         uint16_t wTimeout = 0xffff;
         while (((KINETISK_SPI0.SR) & (15 << 12)) && (--wTimeout)) ; // wait until empty
-        
+
 //         KINETISK_SPI0.MCR |= SPI_MCR_CLR_RXF; // discard any received data
 //    KINETISK_SPI0.SR = SPI_SR_TCF;
-        
-        // Transfer a 0 out... 
-        writedata8_cont(0);   
-        
-        // Now wait until completed. 
+
+        // Transfer a 0 out...
+        writedata8_cont(0);
+
+        // Now wait until completed.
         wTimeout = 0xffff;
         while (((KINETISK_SPI0.SR) & (15 << 12)) && (--wTimeout)) ; // wait until empty
         r = KINETISK_SPI0.POPR;  // get the received byte... should check for it first...
@@ -226,65 +229,65 @@ uint8_t ILI9341_t3::readdata(void)
  */
 
 
-uint8_t ILI9341_t3::readcommand8(uint8_t c, uint8_t index)
-{
-    uint16_t wTimeout = 0xffff;
-    uint8_t r=0;
+uint8_t ILI9341_t3::readcommand8(uint8_t c, uint8_t index) {
+  uint16_t wTimeout = 0xffff;
+  uint8_t r = 0;
 
-    SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
-    while (((KINETISK_SPI0.SR) & (15 << 12)) && (--wTimeout)) ; // wait until empty
+  SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
+  while (((KINETISK_SPI0.SR) & (15 << 12)) && (--wTimeout)) { // wait until empty
+  }
+  // Make sure the last frame has been sent...
+  KINETISK_SPI0.SR = SPI_SR_TCF;   // dlear it out;
+  wTimeout = 0xffff;
+  while (!((KINETISK_SPI0.SR) & SPI_SR_TCF) && (--wTimeout)) { // wait until it says the last frame completed
+  }
+  // clear out any current received bytes
+  wTimeout = 0x10;    // should not go more than 4...
+  while ((((KINETISK_SPI0.SR) >> 4) & 0xf) && (--wTimeout)) {
+    r = KINETISK_SPI0.POPR;
+  }
 
-    // Make sure the last frame has been sent...
-    KINETISK_SPI0.SR = SPI_SR_TCF;   // dlear it out;
-    wTimeout = 0xffff;
-    while (!((KINETISK_SPI0.SR) & SPI_SR_TCF) && (--wTimeout)) ; // wait until it says the last frame completed
+  //writecommand(0xD9); // sekret command
+  KINETISK_SPI0.PUSHR = 0xD9 | (pcs_command << 16) | SPI_PUSHR_CTAS(0) |
+      SPI_PUSHR_CONT;
+  //  while (((KINETISK_SPI0.SR) & (15 << 12)) > (3 << 12)) ; // wait if FIFO full
 
-    // clear out any current received bytes
-    wTimeout = 0x10;    // should not go more than 4...
-    while ((((KINETISK_SPI0.SR) >> 4) & 0xf) && (--wTimeout))  {
-        r = KINETISK_SPI0.POPR;
-    }
-
-    //writecommand(0xD9); // sekret command
-  KINETISK_SPI0.PUSHR = 0xD9 | (pcs_command << 16) | SPI_PUSHR_CTAS(0) | SPI_PUSHR_CONT;
-//  while (((KINETISK_SPI0.SR) & (15 << 12)) > (3 << 12)) ; // wait if FIFO full
-
-    // writedata(0x10 + index);
+  // writedata(0x10 + index);
   KINETISK_SPI0.PUSHR = (0x10 + index) | (pcs_data << 16) | SPI_PUSHR_CTAS(0);
-//  while (((KINETISK_SPI0.SR) & (15 << 12)) > (3 << 12)) ; // wait if FIFO full
+  //  while (((KINETISK_SPI0.SR) & (15 << 12)) > (3 << 12)) ; // wait if FIFO full
 
-    // writecommand(c);
-     KINETISK_SPI0.PUSHR = c | (pcs_command << 16) | SPI_PUSHR_CTAS(0) | SPI_PUSHR_CONT;
-//  while (((KINETISK_SPI0.SR) & (15 << 12)) > (3 << 12)) ; // wait if FIFO full
+  // writecommand(c);
+  KINETISK_SPI0.PUSHR = c | (pcs_command << 16) | SPI_PUSHR_CTAS(0) |
+      SPI_PUSHR_CONT;
+  //  while (((KINETISK_SPI0.SR) & (15 << 12)) > (3 << 12)) ; // wait if FIFO full
 
-    // readdata
+  // readdata
   KINETISK_SPI0.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0);
-//  while (((KINETISK_SPI0.SR) & (15 << 12)) > (3 << 12)) ; // wait if FIFO full
+  //  while (((KINETISK_SPI0.SR) & (15 << 12)) > (3 << 12)) ; // wait if FIFO full
 
-    // Now wait until completed.
-    wTimeout = 0xffff;
-    while (((KINETISK_SPI0.SR) & (15 << 12)) && (--wTimeout)) ; // wait until empty
-
-    // Make sure the last frame has been sent...
-    KINETISK_SPI0.SR = SPI_SR_TCF;   // dlear it out;
-    wTimeout = 0xffff;
-    while (!((KINETISK_SPI0.SR) & SPI_SR_TCF) && (--wTimeout)) ; // wait until it says the last frame completed
-
-    wTimeout = 0x10;    // should not go more than 4...
-    // lets get all of the values on the FIFO
-    while ((((KINETISK_SPI0.SR) >> 4) & 0xf) && (--wTimeout))  {
-        r = KINETISK_SPI0.POPR;
-    }
-    SPI.endTransaction();
-    return r;  // get the received byte... should check for it first...
+  // Now wait until completed.
+  wTimeout = 0xffff;
+  while (((KINETISK_SPI0.SR) & (15 << 12)) && (--wTimeout)) { // wait until empty
+  }
+  // Make sure the last frame has been sent...
+  KINETISK_SPI0.SR = SPI_SR_TCF;   // dlear it out;
+  wTimeout = 0xffff;
+  while (!((KINETISK_SPI0.SR) & SPI_SR_TCF) && (--wTimeout)) { // wait until it says the last frame completed
+  }
+  wTimeout = 0x10;    // should not go more than 4...
+  // lets get all of the values on the FIFO
+  while ((((KINETISK_SPI0.SR) >> 4) & 0xf) && (--wTimeout)) {
+    r = KINETISK_SPI0.POPR;
+  }
+  SPI.endTransaction();
+  return r;  // get the received byte... should check for it first...
 }
 
 
 // Read Pixel at x,y and get back 16-bit packed color
-uint16_t ILI9341_t3::readPixel(int16_t x, int16_t y)
-{
+uint16_t ILI9341_t3::readPixel(int16_t x, int16_t y) {
   uint8_t dummy __attribute__((unused));
-  uint8_t r,g,b;
+  uint8_t r, g, b;
 
   SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
 
@@ -293,15 +296,19 @@ uint16_t ILI9341_t3::readPixel(int16_t x, int16_t y)
   waitTransmitComplete();
 
   // Push 4 bytes over SPI
-  KINETISK_SPI0.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0)| SPI_PUSHR_CONT;
+  KINETISK_SPI0.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0) |
+      SPI_PUSHR_CONT;
   waitFifoEmpty();    // wait for both queues to be empty.
 
-  KINETISK_SPI0.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0)| SPI_PUSHR_CONT;
-  KINETISK_SPI0.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0)| SPI_PUSHR_CONT;
-  KINETISK_SPI0.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0)| SPI_PUSHR_EOQ;
+  KINETISK_SPI0.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0) |
+      SPI_PUSHR_CONT;
+  KINETISK_SPI0.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0) |
+      SPI_PUSHR_CONT;
+  KINETISK_SPI0.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0) |
+      SPI_PUSHR_EOQ;
 
   // Wait for End of Queue
-  while ((KINETISK_SPI0.SR & SPI_SR_EOQF) == 0) ;
+  while ((KINETISK_SPI0.SR & SPI_SR_EOQF) == 0) {}
   KINETISK_SPI0.SR = SPI_SR_EOQF;  // make sure it is clear
 
   // Read Pixel Data
@@ -311,38 +318,44 @@ uint16_t ILI9341_t3::readPixel(int16_t x, int16_t y)
   b = KINETISK_SPI0.POPR;    // Read a BLUE byte of GRAM
 
   SPI.endTransaction();
-  return color565(r,g,b);
+  return color565(r, g, b);
 }
 
 // Now lets see if we can read in multiple pixels
-void ILI9341_t3::readRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t *pcolors)
-{
+void ILI9341_t3::readRect(int16_t x,
+    int16_t y,
+    int16_t w,
+    int16_t h,
+    uint16_t* pcolors) {
   uint8_t dummy __attribute__((unused));
-  uint8_t r,g,b;
+  uint8_t r, g, b;
   uint16_t c = w * h;
 
   SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
 
-  setAddr(x, y, x+w-1, y+h-1);
+  setAddr(x, y, x + w - 1, y + h - 1);
   writecommand_cont(ILI9341_RAMRD); // read from RAM
   waitTransmitComplete();
-  KINETISK_SPI0.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0)| SPI_PUSHR_CONT | SPI_PUSHR_EOQ;
-  while ((KINETISK_SPI0.SR & SPI_SR_EOQF) == 0) ;
+  KINETISK_SPI0.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0) |
+      SPI_PUSHR_CONT | SPI_PUSHR_EOQ;
+  while ((KINETISK_SPI0.SR & SPI_SR_EOQF) == 0) {}
   KINETISK_SPI0.SR = SPI_SR_EOQF;  // make sure it is clear
   while ((KINETISK_SPI0.SR & 0xf0)) {
     dummy = KINETISK_SPI0.POPR;  // Read a DUMMY byte but only once
   }
   c *= 3; // number of bytes we will transmit to the display
   while (c--) {
-          if (c) {
-                KINETISK_SPI0.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0)| SPI_PUSHR_CONT;
-          } else {
-                KINETISK_SPI0.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0)| SPI_PUSHR_EOQ;
+    if (c) {
+      KINETISK_SPI0.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0) |
+          SPI_PUSHR_CONT;
+    } else {
+      KINETISK_SPI0.PUSHR = 0 | (pcs_data << 16) | SPI_PUSHR_CTAS(0) |
+          SPI_PUSHR_EOQ;
     }
 
     // If last byte wait until all have come in...
     if (c == 0) {
-      while ((KINETISK_SPI0.SR & SPI_SR_EOQF) == 0) ;
+      while ((KINETISK_SPI0.SR & SPI_SR_EOQF) == 0) {}
       KINETISK_SPI0.SR = SPI_SR_EOQF;  // make sure it is clear
     }
 
@@ -350,23 +363,26 @@ void ILI9341_t3::readRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t *
       r = KINETISK_SPI0.POPR;    // Read a RED byte of GRAM
       g = KINETISK_SPI0.POPR;    // Read a GREEN byte of GRAM
       b = KINETISK_SPI0.POPR;    // Read a BLUE byte of GRAM
-      *pcolors++ = color565(r,g,b);
+      *pcolors++ = color565(r, g, b);
     }
 
     // like waitFiroNotFull but does not pop our return queue
-    while ((KINETISK_SPI0.SR & (15 << 12)) > (3 << 12)) ;
+    while ((KINETISK_SPI0.SR & (15 << 12)) > (3 << 12)) {}
   }
   SPI.endTransaction();
 }
 
 // Now lets see if we can writemultiple pixels
-void ILI9341_t3::writeRect(int16_t x, int16_t y, int16_t w, int16_t h, const uint16_t *pcolors)
-{
-     SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
-  setAddr(x, y, x+w-1, y+h-1);
+void ILI9341_t3::writeRect(int16_t x,
+    int16_t y,
+    int16_t w,
+    int16_t h,
+    const uint16_t* pcolors) {
+  SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
+  setAddr(x, y, x + w - 1, y + h - 1);
   writecommand_cont(ILI9341_RAMWR);
-  for(y=h; y>0; y--) {
-    for(x=w; x>1; x--) {
+  for (y = h; y > 0; y--) {
+    for (x = w; x > 1; x--) {
       writedata16_cont(*pcolors++);
     }
     writedata16_last(*pcolors++);
@@ -395,21 +411,22 @@ static const uint8_t init_commands[] = {
   2, 0xF2, 0x00, // Gamma Function Disable
   2, ILI9341_GAMMASET, 0x01, // Gamma curve selected
   16, ILI9341_GMCTRP1, 0x0F, 0x31, 0x2B, 0x0C, 0x0E, 0x08,
-    0x4E, 0xF1, 0x37, 0x07, 0x10, 0x03, 0x0E, 0x09, 0x00, // Set Gamma
+  0x4E, 0xF1, 0x37, 0x07, 0x10, 0x03, 0x0E, 0x09, 0x00, // Set Gamma
   16, ILI9341_GMCTRN1, 0x00, 0x0E, 0x14, 0x03, 0x11, 0x07,
-    0x31, 0xC1, 0x48, 0x08, 0x0F, 0x0C, 0x31, 0x36, 0x0F, // Set Gamma
+  0x31, 0xC1, 0x48, 0x08, 0x0F, 0x0C, 0x31, 0x36, 0x0F, // Set Gamma
   0
 };
 
-void ILI9341_t3::begin(void)
-{
-    // verify SPI pins are valid;
-    if ((_mosi == 11 || _mosi == 7) && (_miso == 12 || _miso == 8) && (_sclk == 13 || _sclk == 14)) {
-        SPI.setMOSI(_mosi);
-        SPI.setMISO(_miso);
-        SPI.setSCK(_sclk);
-  } else
-        return; // not valid pins...
+void ILI9341_t3::begin(void) {
+  // verify SPI pins are valid;
+  if ((_mosi == 11 || _mosi == 7) && (_miso == 12 || _miso == 8) &&
+      (_sclk == 13 || _sclk == 14)) {
+    SPI.setMOSI(_mosi);
+    SPI.setMISO(_miso);
+    SPI.setSCK(_sclk);
+  } else {
+    return; // not valid pins...
+  }
   SPI.begin();
   if (SPI.pinIsChipSelect(_cs, _dc)) {
     pcs_data = SPI.setCS(_cs);
@@ -442,10 +459,10 @@ void ILI9341_t3::begin(void)
   Serial.print("\nSelf Diagnostic: 0x"); Serial.println(x, HEX);
   */
   SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
-  const uint8_t *addr = init_commands;
+  const uint8_t* addr = init_commands;
   while (1) {
     uint8_t count = *addr++;
-    if (count-- == 0) break;
+    if (count-- == 0) {break; }
     writecommand_cont(*addr++);
     while (count-- > 0) {
       writedata8_cont(*addr++);
@@ -454,7 +471,7 @@ void ILI9341_t3::begin(void)
   writecommand_last(ILI9341_SLPOUT);    // Exit Sleep
   SPI.endTransaction();
 
-  delay(120);     
+  delay(120);
   SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
   writecommand_last(ILI9341_DISPON);    // Display on
   SPI.endTransaction();
@@ -500,20 +517,19 @@ POSSIBILITY OF SUCH DAMAGE.
 extern "C" const unsigned char glcdfont[];
 
 // Draw a circle outline
-void ILI9341_t3::drawCircle(int16_t x0, int16_t y0, int16_t r,
-    uint16_t color) {
+void ILI9341_t3::drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color) {
   int16_t f = 1 - r;
   int16_t ddF_x = 1;
   int16_t ddF_y = -2 * r;
   int16_t x = 0;
   int16_t y = r;
 
-  drawPixel(x0  , y0+r, color);
-  drawPixel(x0  , y0-r, color);
-  drawPixel(x0+r, y0  , color);
-  drawPixel(x0-r, y0  , color);
+  drawPixel(x0,     y0 + r, color);
+  drawPixel(x0,     y0 - r, color);
+  drawPixel(x0 + r, y0,     color);
+  drawPixel(x0 - r, y0,     color);
 
-  while (x<y) {
+  while (x < y) {
     if (f >= 0) {
       y--;
       ddF_y += 2;
@@ -534,15 +550,18 @@ void ILI9341_t3::drawCircle(int16_t x0, int16_t y0, int16_t r,
   }
 }
 
-void ILI9341_t3::drawCircleHelper( int16_t x0, int16_t y0,
-               int16_t r, uint8_t cornername, uint16_t color) {
+void ILI9341_t3::drawCircleHelper(int16_t x0,
+    int16_t y0,
+    int16_t r,
+    uint8_t cornername,
+    uint16_t color) {
   int16_t f     = 1 - r;
   int16_t ddF_x = 1;
   int16_t ddF_y = -2 * r;
   int16_t x     = 0;
   int16_t y     = r;
 
-  while (x<y) {
+  while (x < y) {
     if (f >= 0) {
       y--;
       ddF_y += 2;
@@ -570,23 +589,25 @@ void ILI9341_t3::drawCircleHelper( int16_t x0, int16_t y0,
   }
 }
 
-void ILI9341_t3::fillCircle(int16_t x0, int16_t y0, int16_t r,
-            uint16_t color) {
-  drawFastVLine(x0, y0-r, 2*r+1, color);
+void ILI9341_t3::fillCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color) {
+  drawFastVLine(x0, y0 - r, 2 * r + 1, color);
   fillCircleHelper(x0, y0, r, 3, 0, color);
 }
 
 // Used to do circles and roundrects
-void ILI9341_t3::fillCircleHelper(int16_t x0, int16_t y0, int16_t r,
-    uint8_t cornername, int16_t delta, uint16_t color) {
-
+void ILI9341_t3::fillCircleHelper(int16_t x0,
+    int16_t y0,
+    int16_t r,
+    uint8_t cornername,
+    int16_t delta,
+    uint16_t color) {
   int16_t f     = 1 - r;
   int16_t ddF_x = 1;
   int16_t ddF_y = -2 * r;
   int16_t x     = 0;
   int16_t y     = r;
 
-  while (x<y) {
+  while (x < y) {
     if (f >= 0) {
       y--;
       ddF_y += 2;
@@ -597,21 +618,23 @@ void ILI9341_t3::fillCircleHelper(int16_t x0, int16_t y0, int16_t r,
     f     += ddF_x;
 
     if (cornername & 0x1) {
-      drawFastVLine(x0+x, y0-y, 2*y+1+delta, color);
-      drawFastVLine(x0+y, y0-x, 2*x+1+delta, color);
+      drawFastVLine(x0 + x, y0 - y, 2 * y + 1 + delta, color);
+      drawFastVLine(x0 + y, y0 - x, 2 * x + 1 + delta, color);
     }
     if (cornername & 0x2) {
-      drawFastVLine(x0-x, y0-y, 2*y+1+delta, color);
-      drawFastVLine(x0-y, y0-x, 2*x+1+delta, color);
+      drawFastVLine(x0 - x, y0 - y, 2 * y + 1 + delta, color);
+      drawFastVLine(x0 - y, y0 - x, 2 * x + 1 + delta, color);
     }
   }
 }
 
 
 // Bresenham's algorithm - thx wikpedia
-void ILI9341_t3::drawLine(int16_t x0, int16_t y0,
-  int16_t x1, int16_t y1, uint16_t color)
-{
+void ILI9341_t3::drawLine(int16_t x0,
+    int16_t y0,
+    int16_t x1,
+    int16_t y1,
+    uint16_t color) {
   if (y0 == y1) {
     if (x1 > x0) {
       drawFastHLine(x0, y0, x1 - x0 + 1, color);
@@ -656,7 +679,7 @@ void ILI9341_t3::drawLine(int16_t x0, int16_t y0,
   SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
   int16_t xbegin = x0;
   if (steep) {
-    for (; x0<=x1; x0++) {
+    for (; x0 <= x1; x0++) {
       err -= dy;
       if (err < 0) {
         int16_t len = x0 - xbegin;
@@ -673,9 +696,8 @@ void ILI9341_t3::drawLine(int16_t x0, int16_t y0,
     if (x0 > xbegin + 1) {
       VLine(y0, xbegin, x0 - xbegin, color);
     }
-
   } else {
-    for (; x0<=x1; x0++) {
+    for (; x0 <= x1; x0++) {
       err -= dy;
       if (err < 0) {
         int16_t len = x0 - xbegin;
@@ -698,57 +720,75 @@ void ILI9341_t3::drawLine(int16_t x0, int16_t y0,
 }
 
 // Draw a rectangle
-void ILI9341_t3::drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
-{
+void ILI9341_t3::drawRect(int16_t x,
+    int16_t y,
+    int16_t w,
+    int16_t h,
+    uint16_t color) {
   SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
-  HLine(x, y, w, color);
-  HLine(x, y+h-1, w, color);
-  VLine(x, y, h, color);
-  VLine(x+w-1, y, h, color);
+  HLine(x, y,         w, color);
+  HLine(x, y + h - 1, w, color);
+  VLine(x,         y, h, color);
+  VLine(x + w - 1, y, h, color);
   writecommand_last(ILI9341_NOP);
   SPI.endTransaction();
 }
 
 // Draw a rounded rectangle
-void ILI9341_t3::drawRoundRect(int16_t x, int16_t y, int16_t w,
-  int16_t h, int16_t r, uint16_t color) {
+void ILI9341_t3::drawRoundRect(int16_t x,
+    int16_t y,
+    int16_t w,
+    int16_t h,
+    int16_t r,
+    uint16_t color) {
   // smarter version
-  drawFastHLine(x+r  , y    , w-2*r, color); // Top
-  drawFastHLine(x+r  , y+h-1, w-2*r, color); // Bottom
-  drawFastVLine(x    , y+r  , h-2*r, color); // Left
-  drawFastVLine(x+w-1, y+r  , h-2*r, color); // Right
+  drawFastHLine(x + r, y,         w - 2 * r, color); // Top
+  drawFastHLine(x + r, y + h - 1, w - 2 * r, color); // Bottom
+  drawFastVLine(x,         y + r, h - 2 * r, color); // Left
+  drawFastVLine(x + w - 1, y + r, h - 2 * r, color); // Right
   // draw four corners
-  drawCircleHelper(x+r    , y+r    , r, 1, color);
-  drawCircleHelper(x+w-r-1, y+r    , r, 2, color);
-  drawCircleHelper(x+w-r-1, y+h-r-1, r, 4, color);
-  drawCircleHelper(x+r    , y+h-r-1, r, 8, color);
+  drawCircleHelper(x + r,         y + r,         r, 1, color);
+  drawCircleHelper(x + w - r - 1, y + r,         r, 2, color);
+  drawCircleHelper(x + w - r - 1, y + h - r - 1, r, 4, color);
+  drawCircleHelper(x + r,         y + h - r - 1, r, 8, color);
 }
 
 // Fill a rounded rectangle
-void ILI9341_t3::fillRoundRect(int16_t x, int16_t y, int16_t w,
-         int16_t h, int16_t r, uint16_t color) {
+void ILI9341_t3::fillRoundRect(int16_t x,
+    int16_t y,
+    int16_t w,
+    int16_t h,
+    int16_t r,
+    uint16_t color) {
   // smarter version
-  fillRect(x+r, y, w-2*r, h, color);
+  fillRect(x + r, y, w - 2 * r, h, color);
 
   // draw four corners
-  fillCircleHelper(x+w-r-1, y+r, r, 1, h-2*r-1, color);
-  fillCircleHelper(x+r    , y+r, r, 2, h-2*r-1, color);
+  fillCircleHelper(x + w - r - 1, y + r, r, 1, h - 2 * r - 1, color);
+  fillCircleHelper(x + r,         y + r, r, 2, h - 2 * r - 1, color);
 }
 
 // Draw a triangle
-void ILI9341_t3::drawTriangle(int16_t x0, int16_t y0,
-        int16_t x1, int16_t y1,
-        int16_t x2, int16_t y2, uint16_t color) {
+void ILI9341_t3::drawTriangle(int16_t x0,
+    int16_t y0,
+    int16_t x1,
+    int16_t y1,
+    int16_t x2,
+    int16_t y2,
+    uint16_t color) {
   drawLine(x0, y0, x1, y1, color);
   drawLine(x1, y1, x2, y2, color);
   drawLine(x2, y2, x0, y0, color);
 }
 
 // Fill a triangle
-void ILI9341_t3::fillTriangle ( int16_t x0, int16_t y0,
-          int16_t x1, int16_t y1,
-          int16_t x2, int16_t y2, uint16_t color) {
-
+void ILI9341_t3::fillTriangle(int16_t x0,
+    int16_t y0,
+    int16_t x1,
+    int16_t y1,
+    int16_t x2,
+    int16_t y2,
+    uint16_t color) {
   int16_t a, b, y, last;
 
   // Sort coordinates by Y order (y2 >= y1 >= y0)
@@ -762,25 +802,27 @@ void ILI9341_t3::fillTriangle ( int16_t x0, int16_t y0,
     std::swap(y0, y1); std::swap(x0, x1);
   }
 
-  if(y0 == y2) { // Handle awkward all-on-same-line case as its own thing
+  if (y0 == y2) { // Handle awkward all-on-same-line case as its own thing
     a = b = x0;
-    if(x1 < a)      a = x1;
-    else if(x1 > b) b = x1;
-    if(x2 < a)      a = x2;
-    else if(x2 > b) b = x2;
-    drawFastHLine(a, y0, b-a+1, color);
+    if (x1 < a) {a = x1; } else if (x1 > b) {
+      b = x1;
+    }
+    if (x2 < a) {a = x2; } else if (x2 > b) {
+      b = x2;
+    }
+    drawFastHLine(a, y0, b - a + 1, color);
     return;
   }
 
   int16_t
-    dx01 = x1 - x0,
-    dy01 = y1 - y0,
-    dx02 = x2 - x0,
-    dy02 = y2 - y0,
-    dx12 = x2 - x1,
-    dy12 = y2 - y1,
-    sa   = 0,
-    sb   = 0;
+      dx01 = x1 - x0,
+      dy01 = y1 - y0,
+      dx02 = x2 - x0,
+      dy02 = y2 - y0,
+      dx12 = x2 - x1,
+      dy12 = y2 - y1,
+      sa   = 0,
+      sb   = 0;
 
   // For upper part of triangle, find scanline crossings for segments
   // 0-1 and 0-2.  If y1=y2 (flat-bottomed triangle), the scanline y1
@@ -788,10 +830,12 @@ void ILI9341_t3::fillTriangle ( int16_t x0, int16_t y0,
   // error there), otherwise scanline y1 is skipped here and handled
   // in the second loop...which also avoids a /0 error here if y0=y1
   // (flat-topped triangle).
-  if(y1 == y2) last = y1;   // Include y1 scanline
-  else         last = y1-1; // Skip it
-
-  for(y=y0; y<=last; y++) {
+  if (y1 == y2) {
+    last = y1;   // Include y1 scanline
+  } else {
+    last = y1 - 1; // Skip it
+  }
+  for (y = y0; y <= last; y++) {
     a   = x0 + sa / dy01;
     b   = x0 + sb / dy02;
     sa += dx01;
@@ -800,15 +844,15 @@ void ILI9341_t3::fillTriangle ( int16_t x0, int16_t y0,
     a = x0 + (x1 - x0) * (y - y0) / (y1 - y0);
     b = x0 + (x2 - x0) * (y - y0) / (y2 - y0);
     */
-    if(a > b) std::swap(a,b);
-    drawFastHLine(a, y, b-a+1, color);
+    if (a > b) {std::swap(a, b); }
+    drawFastHLine(a, y, b - a + 1, color);
   }
 
   // For lower part of triangle, find scanline crossings for segments
   // 0-2 and 1-2.  This loop is skipped if y1=y2.
   sa = dx12 * (y - y1);
   sb = dx02 * (y - y0);
-  for(; y<=y2; y++) {
+  for (; y <= y2; y++) {
     a   = x1 + sa / dy12;
     b   = x0 + sb / dy02;
     sa += dx12;
@@ -817,28 +861,29 @@ void ILI9341_t3::fillTriangle ( int16_t x0, int16_t y0,
     a = x1 + (x2 - x1) * (y - y1) / (y2 - y1);
     b = x0 + (x2 - x0) * (y - y0) / (y2 - y0);
     */
-    if(a > b) std::swap(a,b);
-    drawFastHLine(a, y, b-a+1, color);
+    if (a > b) {std::swap(a, b); }
+    drawFastHLine(a, y, b - a + 1, color);
   }
 }
 
-void ILI9341_t3::drawBitmap(int16_t x, int16_t y,
-            const uint8_t *bitmap, int16_t w, int16_t h,
-            uint16_t color) {
-
+void ILI9341_t3::drawBitmap(int16_t x,
+    int16_t y,
+    const uint8_t* bitmap,
+    int16_t w,
+    int16_t h,
+    uint16_t color) {
   int16_t i, j, byteWidth = (w + 7) / 8;
 
-  for(j=0; j<h; j++) {
-    for(i=0; i<w; i++ ) {
-      if(pgm_read_byte(bitmap + j * byteWidth + i / 8) & (128 >> (i & 7))) {
-  drawPixel(x+i, y+j, color);
+  for (j = 0; j < h; j++) {
+    for (i = 0; i < w; i++) {
+      if (pgm_read_byte(bitmap + j * byteWidth + i / 8) & (128 >> (i & 7))) {
+        drawPixel(x + i, y + j, color);
       }
     }
   }
 }
 
-size_t ILI9341_t3::write(uint8_t c)
-{
+size_t ILI9341_t3::write(uint8_t c) {
   if (font) {
     if (c == '\n') {
       //cursor_y += ??
@@ -848,15 +893,15 @@ size_t ILI9341_t3::write(uint8_t c)
     }
   } else {
     if (c == '\n') {
-      cursor_y += textsize*8;
+      cursor_y += textsize * 8;
       cursor_x  = 0;
     } else if (c == '\r') {
       // skip em
     } else {
       drawChar(cursor_x, cursor_y, c, textcolor, textbgcolor, textsize);
-      cursor_x += textsize*6;
-      if (wrap && (cursor_x > (_width - textsize*6))) {
-        cursor_y += textsize*8;
+      cursor_x += textsize * 6;
+      if (wrap && (cursor_x > (_width - textsize * 6))) {
+        cursor_y += textsize * 8;
         cursor_x = 0;
       }
     }
@@ -865,24 +910,28 @@ size_t ILI9341_t3::write(uint8_t c)
 }
 
 // Draw a character
-void ILI9341_t3::drawChar(int16_t x, int16_t y, unsigned char c,
-          uint16_t fgcolor, uint16_t bgcolor, uint8_t size)
-{
-  if((x >= _width)            || // Clip right
-     (y >= _height)           || // Clip bottom
-     ((x + 6 * size - 1) < 0) || // Clip left  TODO: is this correct?
-     ((y + 8 * size - 1) < 0))   // Clip top   TODO: is this correct?
+void ILI9341_t3::drawChar(int16_t x,
+    int16_t y,
+    unsigned char c,
+    uint16_t fgcolor,
+    uint16_t bgcolor,
+    uint8_t size) {
+  if ((x >= _width)            || // Clip right
+      (y >= _height)           || // Clip bottom
+      ((x + 6 * size - 1) < 0) || // Clip left  TODO: is this correct?
+      ((y + 8 * size - 1) < 0)) { // Clip top   TODO: is this correct?
     return;
+  }
 
   if (fgcolor == bgcolor) {
     // This transparent approach is only about 20% faster
     if (size == 1) {
       uint8_t mask = 0x01;
       int16_t xoff, yoff;
-      for (yoff=0; yoff < 8; yoff++) {
+      for (yoff = 0; yoff < 8; yoff++) {
         uint8_t line = 0;
-        for (xoff=0; xoff < 5; xoff++) {
-          if (glcdfont[c * 5 + xoff] & mask) line |= 1;
+        for (xoff = 0; xoff < 5; xoff++) {
+          if (glcdfont[c * 5 + xoff] & mask) {line |= 1; }
           line <<= 1;
         }
         line >>= 1;
@@ -916,10 +965,10 @@ void ILI9341_t3::drawChar(int16_t x, int16_t y, unsigned char c,
     } else {
       uint8_t mask = 0x01;
       int16_t xoff, yoff;
-      for (yoff=0; yoff < 8; yoff++) {
+      for (yoff = 0; yoff < 8; yoff++) {
         uint8_t line = 0;
-        for (xoff=0; xoff < 5; xoff++) {
-          if (glcdfont[c * 5 + xoff] & mask) line |= 1;
+        for (xoff = 0; xoff < 5; xoff++) {
+          if (glcdfont[c * 5 + xoff] & mask) {line |= 1; }
           line <<= 1;
         }
         line >>= 1;
@@ -927,25 +976,25 @@ void ILI9341_t3::drawChar(int16_t x, int16_t y, unsigned char c,
         while (line) {
           if (line == 0x1F) {
             fillRect(x + xoff * size, y + yoff * size,
-              5 * size, size, fgcolor);
+                5 * size, size, fgcolor);
             break;
           } else if (line == 0x1E) {
             fillRect(x + xoff * size, y + yoff * size,
-              4 * size, size, fgcolor);
+                4 * size, size, fgcolor);
             break;
           } else if ((line & 0x1C) == 0x1C) {
             fillRect(x + xoff * size, y + yoff * size,
-              3 * size, size, fgcolor);
+                3 * size, size, fgcolor);
             line <<= 4;
             xoff += 4;
           } else if ((line & 0x18) == 0x18) {
             fillRect(x + xoff * size, y + yoff * size,
-              2 * size, size, fgcolor);
+                2 * size, size, fgcolor);
             line <<= 3;
             xoff += 3;
           } else if ((line & 0x10) == 0x10) {
             fillRect(x + xoff * size, y + yoff * size,
-              size, size, fgcolor);
+                size, size, fgcolor);
             line <<= 2;
             xoff += 2;
           } else {
@@ -964,19 +1013,19 @@ void ILI9341_t3::drawChar(int16_t x, int16_t y, unsigned char c,
     uint8_t xr, yr;
     uint8_t mask = 0x01;
     uint16_t color;
-    for (y=0; y < 8; y++) {
-      for (yr=0; yr < size; yr++) {
-        for (x=0; x < 5; x++) {
+    for (y = 0; y < 8; y++) {
+      for (yr = 0; yr < size; yr++) {
+        for (x = 0; x < 5; x++) {
           if (glcdfont[c * 5 + x] & mask) {
             color = fgcolor;
           } else {
             color = bgcolor;
           }
-          for (xr=0; xr < size; xr++) {
+          for (xr = 0; xr < size; xr++) {
             writedata16_cont(color);
           }
         }
-        for (xr=0; xr < size; xr++) {
+        for (xr = 0; xr < size; xr++) {
           writedata16_cont(bgcolor);
         }
       }
@@ -987,14 +1036,14 @@ void ILI9341_t3::drawChar(int16_t x, int16_t y, unsigned char c,
   }
 }
 
-static uint32_t fetchbit(const uint8_t *p, uint32_t index)
-{
-  if (p[index >> 3] & (1 << (7 - (index & 7)))) return 1;
+static uint32_t fetchbit(const uint8_t* p, uint32_t index) {
+  if (p[index >> 3] & (1 << (7 - (index & 7)))) {return 1; }
   return 0;
 }
 
-static uint32_t fetchbits_unsigned(const uint8_t *p, uint32_t index, uint32_t required)
-{
+static uint32_t fetchbits_unsigned(const uint8_t* p,
+    uint32_t index,
+    uint32_t required) {
   uint32_t val = 0;
   do {
     uint8_t b = p[index >> 3];
@@ -1014,20 +1063,20 @@ static uint32_t fetchbits_unsigned(const uint8_t *p, uint32_t index, uint32_t re
   return val;
 }
 
-static uint32_t fetchbits_signed(const uint8_t *p, uint32_t index, uint32_t required)
-{
+static uint32_t fetchbits_signed(const uint8_t* p,
+    uint32_t index,
+    uint32_t required) {
   uint32_t val = fetchbits_unsigned(p, index, required);
   if (val & (1 << (required - 1))) {
-    return (int32_t)val - (1 << required);
+    return (int32_t) val - (1 << required);
   }
-  return (int32_t)val;
+  return (int32_t) val;
 }
 
 
-void ILI9341_t3::drawFontChar(unsigned int c)
-{
+void ILI9341_t3::drawFontChar(unsigned int c) {
   uint32_t bitoffset;
-  const uint8_t *data;
+  const uint8_t* data;
 
   //Serial.printf("drawFontChar %d\n", c);
 
@@ -1035,7 +1084,8 @@ void ILI9341_t3::drawFontChar(unsigned int c)
     bitoffset = c - font->index1_first;
     bitoffset *= font->bits_index;
   } else if (c >= font->index2_first && c <= font->index2_last) {
-    bitoffset = c - font->index2_first + font->index1_last - font->index1_first + 1;
+    bitoffset = c - font->index2_first + font->index1_last -
+        font->index1_first + 1;
     bitoffset *= font->bits_index;
   } else if (font->unicode) {
     return; // TODO: implement sparse unicode
@@ -1043,10 +1093,12 @@ void ILI9341_t3::drawFontChar(unsigned int c)
     return;
   }
   //Serial.printf("  index =  %d\n", fetchbits_unsigned(font->index, bitoffset, font->bits_index));
-  data = font->data + fetchbits_unsigned(font->index, bitoffset, font->bits_index);
+  data = font->data + fetchbits_unsigned(font->index,
+    bitoffset,
+    font->bits_index);
 
   uint32_t encoding = fetchbits_unsigned(data, 0, 3);
-  if (encoding != 0) return;
+  if (encoding != 0) {return; }
   uint32_t width = fetchbits_unsigned(data, 3, font->bits_width);
   bitoffset = font->bits_width + 3;
   uint32_t height = fetchbits_unsigned(data, bitoffset, font->bits_height);
@@ -1066,14 +1118,14 @@ void ILI9341_t3::drawFontChar(unsigned int c)
   //Serial.printf("  cursor = %d,%d\n", cursor_x, cursor_y);
 
   // horizontally, we draw every pixel, or none at all
-  if (cursor_x < 0) cursor_x = 0;
+  if (cursor_x < 0) {cursor_x = 0; }
   int32_t origin_x = cursor_x + xoffset;
   if (origin_x < 0) {
     cursor_x -= xoffset;
     origin_x = 0;
   }
-  if (origin_x + (int)width > _width) {
-    if (!wrap) return;
+  if (origin_x + (int) width > _width) {
+    if (!wrap) {return; }
     origin_x = 0;
     if (xoffset >= 0) {
       cursor_x = 0;
@@ -1082,7 +1134,7 @@ void ILI9341_t3::drawFontChar(unsigned int c)
     }
     cursor_y += font->line_space;
   }
-  if (cursor_y >= _height) return;
+  if (cursor_y >= _height) {return; }
   cursor_x += delta;
 
   // vertically, the top and/or bottom can be clipped
@@ -1101,7 +1153,7 @@ void ILI9341_t3::drawFontChar(unsigned int c)
       uint32_t x = 0;
       do {
         uint32_t xsize = width - x;
-        if (xsize > 32) xsize = 32;
+        if (xsize > 32) {xsize = 32; }
         uint32_t bits = fetchbits_unsigned(data, bitoffset, xsize);
         drawFontBits(bits, xsize, origin_x + x, y, 1);
         bitoffset += xsize;
@@ -1115,7 +1167,7 @@ void ILI9341_t3::drawFontChar(unsigned int c)
       uint32_t x = 0;
       do {
         uint32_t xsize = width - x;
-        if (xsize > 32) xsize = 32;
+        if (xsize > 32) {xsize = 32; }
         //Serial.printf("    multi line %d\n", n);
         uint32_t bits = fetchbits_unsigned(data, bitoffset, xsize);
         drawFontBits(bits, xsize, origin_x + x, y, n);
@@ -1126,18 +1178,21 @@ void ILI9341_t3::drawFontChar(unsigned int c)
       linecount -= n;
     }
     //if (++loopcount > 100) {
-      //Serial.println("     abort draw loop");
-      //break;
+    //Serial.println("     abort draw loop");
+    //break;
     //}
   }
 }
 
-void ILI9341_t3::drawFontBits(uint32_t bits, uint32_t numbits, uint32_t x, uint32_t y, uint32_t repeat)
-{
-#if 0      
+void ILI9341_t3::drawFontBits(uint32_t bits,
+    uint32_t numbits,
+    uint32_t x,
+    uint32_t y,
+    uint32_t repeat) {
+#if 0
   // TODO: replace this *slow* code with something fast...
   //Serial.printf("      %d bits at %d,%d: %X\n", numbits, x, y, bits);
-  if (bits == 0) return;
+  if (bits == 0) {return; }
   do {
     uint32_t x1 = x;
     uint32_t n = numbits;
@@ -1154,62 +1209,63 @@ void ILI9341_t3::drawFontBits(uint32_t bits, uint32_t numbits, uint32_t x, uint3
   } while (repeat);
 #endif
 #if 1
-  if (bits == 0) return;
+  if (bits == 0) {return; }
   SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
   int w = 0;
   do {
     uint32_t x1 = x;
-    uint32_t n = numbits;    
-    
+    uint32_t n = numbits;
+
     writecommand_cont(ILI9341_PASET); // Row addr set
     writedata16_cont(y);   // YSTART
-    writedata16_cont(y);   // YEND  
-    
+    writedata16_cont(y);   // YEND
+
     do {
       n--;
       if (bits & (1 << n)) {
         w++;
-      }
-      else if (w > 0) {
+      } else if (w > 0) {
         // "drawFastHLine(x1 - w, y, w, textcolor)"
         writecommand_cont(ILI9341_CASET); // Column addr set
         writedata16_cont(x1 - w);   // XSTART
-        writedata16_cont(x1);   // XEND          
+        writedata16_cont(x1);   // XEND
         writecommand_cont(ILI9341_RAMWR);
         while (w-- > 1) { // draw line
           writedata16_cont(textcolor);
         }
         writedata16_last(textcolor);
       }
-            
+
       x1++;
     } while (n > 0);
 
     if (w > 0) {
-        // "drawFastHLine(x1 - w, y, w, textcolor)"
-        writecommand_cont(ILI9341_CASET); // Column addr set
-        writedata16_cont(x1 - w);   // XSTART
-        writedata16_cont(x1);   // XEND
-        writecommand_cont(ILI9341_RAMWR);        
-        while (w-- > 1) { //draw line
-          writedata16_cont(textcolor);
-        }
-        writedata16_last(textcolor);
+      // "drawFastHLine(x1 - w, y, w, textcolor)"
+      writecommand_cont(ILI9341_CASET); // Column addr set
+      writedata16_cont(x1 - w);   // XSTART
+      writedata16_cont(x1);   // XEND
+      writecommand_cont(ILI9341_RAMWR);
+      while (w-- > 1) { //draw line
+        writedata16_cont(textcolor);
+      }
+      writedata16_last(textcolor);
     }
-    
+
     y++;
     repeat--;
   } while (repeat);
   SPI.endTransaction();
-#endif  
+#endif
 }
 
 void ILI9341_t3::setCursor(int16_t x, int16_t y) {
-  if (x < 0) x = 0;
-  else if (x >= _width) x = _width - 1;
+  if (x < 0) {x = 0; } else if (x >= _width) {
+    x = _width - 1;
+  }
   cursor_x = x;
-  if (y < 0) y = 0;
-  else if (y >= _height) y = _height - 1;
+  if (y < 0) {y = 0; } else if (y >= _height) {
+    y = _height - 1;
+  }
   cursor_y = y;
 }
 
@@ -1236,8 +1292,7 @@ void ILI9341_t3::setTextWrap(boolean w) {
   wrap = w;
 }
 
-boolean ILI9341_t3::getTextWrap()
-{
+boolean ILI9341_t3::getTextWrap() {
   return wrap;
 }
 
@@ -1248,9 +1303,9 @@ uint8_t ILI9341_t3::getRotation(void) {
 void ILI9341_t3::sleep(bool enable) {
   SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
   if (enable) {
-    writecommand_cont(ILI9341_DISPOFF);    
-    writecommand_last(ILI9341_SLPIN);  
-      SPI.endTransaction();
+    writecommand_cont(ILI9341_DISPOFF);
+    writecommand_last(ILI9341_SLPIN);
+    SPI.endTransaction();
   } else {
     writecommand_cont(ILI9341_DISPON);
     writecommand_last(ILI9341_SLPOUT);
@@ -1259,11 +1314,16 @@ void ILI9341_t3::sleep(bool enable) {
   }
 }
 
-void Adafruit_GFX_Button::initButton(ILI9341_t3 *gfx,
-  int16_t x, int16_t y, uint8_t w, uint8_t h,
-  uint16_t outline, uint16_t fill, uint16_t textcolor,
-  const char *label, uint8_t textsize)
-{
+void Adafruit_GFX_Button::initButton(ILI9341_t3* gfx,
+    int16_t x,
+    int16_t y,
+    uint8_t w,
+    uint8_t h,
+    uint16_t outline,
+    uint16_t fill,
+    uint16_t textcolor,
+    const char* label,
+    uint8_t textsize) {
   _x = x;
   _y = y;
   _w = w;
@@ -1277,11 +1337,10 @@ void Adafruit_GFX_Button::initButton(ILI9341_t3 *gfx,
   _label[9] = 0;
 }
 
-void Adafruit_GFX_Button::drawButton(bool inverted)
-{
+void Adafruit_GFX_Button::drawButton(bool inverted) {
   uint16_t fill, outline, text;
 
-  if (! inverted) {
+  if (!inverted) {
     fill = _fillcolor;
     outline = _outlinecolor;
     text = _textcolor;
@@ -1290,18 +1349,18 @@ void Adafruit_GFX_Button::drawButton(bool inverted)
     outline = _outlinecolor;
     text = _fillcolor;
   }
-  _gfx->fillRoundRect(_x - (_w/2), _y - (_h/2), _w, _h, std::min(_w,_h)/4, fill);
-  _gfx->drawRoundRect(_x - (_w/2), _y - (_h/2), _w, _h, std::min(_w,_h)/4, outline);
-  _gfx->setCursor(_x - strlen(_label)*3*_textsize, _y-4*_textsize);
+  _gfx->fillRoundRect(_x - (_w / 2), _y - (_h / 2), _w, _h, std::min(_w,
+      _h) / 4, fill);
+  _gfx->drawRoundRect(_x - (_w / 2), _y - (_h / 2), _w, _h, std::min(_w,
+      _h) / 4, outline);
+  _gfx->setCursor(_x - strlen(_label) * 3 * _textsize, _y - 4 * _textsize);
   _gfx->setTextColor(text);
   _gfx->setTextSize(_textsize);
   _gfx->print(_label);
 }
 
-bool Adafruit_GFX_Button::contains(int16_t x, int16_t y)
-{
-  if ((x < (_x - _w/2)) || (x > (_x + _w/2))) return false;
-  if ((y < (_y - _h/2)) || (y > (_y + _h/2))) return false;
+bool Adafruit_GFX_Button::contains(int16_t x, int16_t y) {
+  if ((x < (_x - _w / 2)) || (x > (_x + _w / 2))) {return false; }
+  if ((y < (_y - _h / 2)) || (y > (_y + _h / 2))) {return false; }
   return true;
 }
-

@@ -44,9 +44,9 @@ void pit3_isr() { PIT_TFLG3 = 1; IntervalTimer::PIT_ISR[3](); }
 
 #elif defined(KINETISL)
 void pit_isr() {
-	if (PIT_TFLG0) { PIT_TFLG0 = 1; IntervalTimer::PIT_ISR[0](); }
-	if (!IntervalTimer::PIT_enabled) return;
-	if (PIT_TFLG1) { PIT_TFLG1 = 1; IntervalTimer::PIT_ISR[1](); }
+  if (PIT_TFLG0) { PIT_TFLG0 = 1; IntervalTimer::PIT_ISR[0](); }
+  if (!IntervalTimer::PIT_enabled) {return; }
+  if (PIT_TFLG1) { PIT_TFLG1 = 1; IntervalTimer::PIT_ISR[1](); }
 }
 #endif
 
@@ -62,7 +62,6 @@ void pit_isr() {
 // period is specified as number of bus cycles
 // ------------------------------------------------------------
 bool IntervalTimer::beginCycles(ISR newISR, uint32_t newValue) {
-
   // if this interval timer is already running, stop it
   if (status == TIMER_PIT) {
     stop_PIT();
@@ -70,15 +69,13 @@ bool IntervalTimer::beginCycles(ISR newISR, uint32_t newValue) {
   }
   // store callback pointer
   myISR = newISR;
-  
+
   // attempt to allocate this timer
-  if (allocate_PIT(newValue)) status = TIMER_PIT;
-  else status = TIMER_OFF;
-  
+  if (allocate_PIT(newValue)) {status = TIMER_PIT; } else {status = TIMER_OFF; }
+
   // check for success and return
-  if (status != TIMER_OFF) return true;
+  if (status != TIMER_OFF) {return true; }
   return false;
-  
 }
 
 
@@ -87,7 +84,7 @@ bool IntervalTimer::beginCycles(ISR newISR, uint32_t newValue) {
 // to determine what hardware resources the timer may be using
 // ------------------------------------------------------------
 void IntervalTimer::end() {
-  if (status == TIMER_PIT) stop_PIT();
+  if (status == TIMER_PIT) {stop_PIT(); }
   status = TIMER_OFF;
 }
 
@@ -122,10 +119,9 @@ void IntervalTimer::disable_PIT() {
 // the function returns true, otherwise it returns false
 // ------------------------------------------------------------
 bool IntervalTimer::allocate_PIT(uint32_t newValue) {
-  
   // enable clock to the PIT module if necessary
-  if (!PIT_enabled) enable_PIT();
-  
+  if (!PIT_enabled) {enable_PIT(); }
+
   // check for an available PIT, and if so, start it
   for (uint8_t id = 0; id < NUM_PIT; id++) {
     if (!PIT_used[id]) {
@@ -135,10 +131,9 @@ bool IntervalTimer::allocate_PIT(uint32_t newValue) {
       return true;
     }
   }
-  
+
   // no PIT available
   return false;
-  
 }
 
 
@@ -148,14 +143,13 @@ bool IntervalTimer::allocate_PIT(uint32_t newValue) {
 // interrupts, effectively starting the timer upon completion
 // ------------------------------------------------------------
 void IntervalTimer::start_PIT(uint32_t newValue) {
-  
   // point to the correct registers
   PIT_LDVAL = &PIT_LDVAL0 + PIT_id * 4;
   PIT_TCTRL = &PIT_TCTRL0 + PIT_id * 4;
-  
+
   // point to the correct PIT ISR
   PIT_ISR[PIT_id] = myISR;
-  
+
   // write value to register and enable interrupt
   *PIT_TCTRL = 0;
   *PIT_LDVAL = newValue;
@@ -168,7 +162,6 @@ void IntervalTimer::start_PIT(uint32_t newValue) {
   NVIC_SET_PRIORITY(IRQ_PIT, nvic_priority); // TODO: use the higher of both channels, shared irq
   NVIC_ENABLE_IRQ(IRQ_PIT);
 #endif
-
 }
 
 
@@ -179,7 +172,6 @@ void IntervalTimer::start_PIT(uint32_t newValue) {
 // also, if no PITs remain in use, disables the core PIT clock
 // ------------------------------------------------------------
 void IntervalTimer::stop_PIT() {
-  
   // disable interrupt and PIT
   *PIT_TCTRL = 0;
 #if defined(KINETISK)
@@ -187,18 +179,15 @@ void IntervalTimer::stop_PIT() {
 #elif defined(KINETISL)
   NVIC_DISABLE_IRQ(IRQ_PIT);
 #endif
-  
+
   // free PIT for future use
   PIT_used[PIT_id] = false;
-  
+
   // check if we're still using any PIT
   for (uint8_t id = 0; id < NUM_PIT; id++) {
-    if (PIT_used[id]) return;
+    if (PIT_used[id]) {return; }
   }
-  
+
   // none used, disable PIT clock
   disable_PIT();
-  
 }
-
-

@@ -35,33 +35,39 @@
 
 #if defined(RAWHID_INTERFACE)
 
-#include <inttypes.h>
+  #include <inttypes.h>
 
 // C language implementation
-#ifdef __cplusplus
+  #ifdef __cplusplus
 extern "C" {
-#endif
-int usb_rawhid_recv(void *buffer, uint32_t timeout);
+  #endif
+int usb_rawhid_recv(void* buffer, uint32_t timeout);
 int usb_rawhid_available(void);
-int usb_rawhid_send(const void *buffer, uint32_t timeout);
-#ifdef __cplusplus
+int usb_rawhid_send(const void* buffer, uint32_t timeout);
+  #ifdef __cplusplus
 }
-#endif
+  #endif
 
 
 // C++ interface
-#ifdef __cplusplus
-class usb_rawhid_class
-{
-public:
-	int available(void) {return usb_rawhid_available(); }
-	int recv(void *buffer, uint16_t timeout) { return usb_rawhid_recv(buffer, timeout); }
-	int send(const void *buffer, uint16_t timeout) { return usb_rawhid_send(buffer, timeout); }
+  #ifdef __cplusplus
+class usb_rawhid_class {
+ public:
+  int available(void) {return usb_rawhid_available(); }
+  int recv(void* buffer, uint16_t timeout) {
+    return usb_rawhid_recv(buffer,
+      timeout);
+  }
+  int send(const void* buffer, uint16_t timeout) {
+    return usb_rawhid_send(
+      buffer,
+      timeout);
+  }
 };
 
 extern usb_rawhid_class RawHID;
 
-#endif // __cplusplus
+  #endif // __cplusplus
 
 #endif // RAWHID_INTERFACE
 

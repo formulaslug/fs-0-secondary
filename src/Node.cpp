@@ -11,5 +11,4 @@ void Node::addChild(Node* child) {
   children.push_back(child);
 }
 
-void Node::draw(Display* displays) {
-}
+void Node::draw(Display* displays) {}
