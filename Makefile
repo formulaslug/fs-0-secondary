@@ -39,7 +39,7 @@ endif
 TOOLSPATH := $(ARDUINOPATH)/hardware/tools
 
 # path location for Teensy 3 core
-COREPATH = $(CURDIR)/src/core
+COREPATH = $(CURDIR)/src/core_controls
 
 # path location for Arduino libraries
 LIBRARYPATH = $(CURDIR)/src/libs

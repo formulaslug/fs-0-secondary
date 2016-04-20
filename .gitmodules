@@ -1,0 +1,3 @@
+[submodule "src/core_controls"]
+	path = src/core_controls
+	url = https://github.com/formulaslug/core_controls
