@@ -40,9 +40,8 @@ int main() {
   constexpr uint32_t MENU_TIMEOUT = 5000; // in ms
 
   // Instantiate display obj and properties; use hardware SPI (#13, #12, #11)
-  ILI9341_t3 tft[2] = {ILI9341_t3(TFT_0_CS, TFT_0_DC),
-                       ILI9341_t3(TFT_1_CS, TFT_1_DC)};
-  /* ILI9341_t3 tft = ILI9341_t3(TFT_0_CS, TFT_0_DC); */
+  ILI9341_t3 tft[2] = {ILI9341_t3(TFT_0_CS, TFT_0_DC, 255, 11, 14),
+                       ILI9341_t3(TFT_1_CS, TFT_1_DC, 255 ,11, 14)};
 
   IntervalTimer interval50hz;
   IntervalTimer interval2hz;
@@ -62,7 +61,7 @@ int main() {
   // init Teensy pins
   // -> init btn pins
   for (i = START_BTN_PIN; i < (START_BTN_PIN + NUM_BTNS); i++) {
-    pinMode(i, INPUT);
+    pinMode(i, INPUT_PULLUP);
   }
 
   // create the node tree
