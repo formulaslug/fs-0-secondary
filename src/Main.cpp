@@ -6,14 +6,14 @@
 // TODO: Need some button debounce
 
 #include <cstdint>
-
-#include <Arduino.h>
-#include <SPI.h>
+#include <IntervalTimer.h>
 
 /* Available sizes: 8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 24, 28, 32, 40, 60,
  *                  72, 96
  */
-#include <font_Arial.h>
+#include "core_controls/CANopen.h"
+#include "libs/font_Arial.h"
+#include "libs/ILI9341_t3.h"
 #include "DashNode.h"
 #include "MenuNode.h"
 #include "Teensy.h"
@@ -31,8 +31,42 @@ void _50hzTimer();
 int btnDebounce();
 
 static Teensy* teensy;
+static CANopen* gCanBus = nullptr;
+
+static CAN_message_t gTxMsg;
+static CAN_message_t gRxMsg;
+
+void canTxISR() {
+  gTxMsg.len = 8;
+  gTxMsg.id = 0x222;
+  for (uint32_t i = 0; i < 8; i++) {
+    gTxMsg.buf[i] = '0' + i;
+  }
+
+  for (uint32_t i = 0; i < 6; i++) {
+    if (!gCanBus->sendMessage(gTxMsg)) {
+      Serial.println("tx failed");
+    }
+    gTxMsg.buf[0]++;
+  }
+}
+
+void canRxISR() {
+  while (gCanBus->recvMessage(gRxMsg)) {
+  }
+}
 
 int main() {
+  constexpr uint32_t k_ID = 0x680;
+  constexpr uint32_t k_baudRate = 500000;
+  gCanBus = new CANopen(k_ID, k_baudRate);
+
+  IntervalTimer canTxInterrupt;
+  canTxInterrupt.begin(canTxISR, 100000);
+
+  IntervalTimer canRxInterrupt;
+  canRxInterrupt.begin(canRxISR, 3000);
+
   constexpr uint32_t TFT_0_DC = 15;
   constexpr uint32_t TFT_0_CS = 10;
   constexpr uint32_t TFT_1_DC = 20;
