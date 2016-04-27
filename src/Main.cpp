@@ -1,7 +1,5 @@
 // @desc Secondary control system for the UCSC's FSAE Electric Vehicle
 
-// TODO: Need some button debounce
-
 #include <cstdint>
 #include <atomic>
 
@@ -35,10 +33,7 @@ void btnDebounce();
 void canTx();
 void canRx();
 
-constexpr uint32_t ADC_CHANGE_TOLERANCE = 3;
-
-// Must be multiple of 20ms (1/50s)
-constexpr uint32_t SUCCESSFUL_PRESS_TIME = 100;
+constexpr uint32_t k_adcChangeTolerance = 3;
 
 // Number of buttons
 constexpr uint32_t k_numBtns = 4;
@@ -46,29 +41,29 @@ constexpr uint32_t k_numBtns = 4;
 // First pin used by buttons. The rest follow in sequentially increasing order.
 constexpr uint32_t k_startBtnPin = 5;
 
-static IntervalTimer gTimeoutInterrupt;
+static IntervalTimer g_timeoutInterrupt;
 
-static Teensy* gTeensy;
-static CANopen* gCanBus = nullptr;
+static Teensy* g_teensy;
+static CANopen* g_canBus = nullptr;
 
-static std::atomic<uint8_t> gBtnPressEvents{0};
-static std::atomic<uint8_t> gBtnReleaseEvents{0};
-static std::atomic<uint8_t> gBtnHeldEvents{0};
+static std::atomic<uint8_t> g_btnPressEvents{0};
+static std::atomic<uint8_t> g_btnReleaseEvents{0};
+static std::atomic<uint8_t> g_btnHeldEvents{0};
 
 int main() {
   constexpr uint32_t k_ID = 0x680;
   constexpr uint32_t k_baudRate = 500000;
-  gCanBus = new CANopen(k_ID, k_baudRate);
+  g_canBus = new CANopen(k_ID, k_baudRate);
 
-  constexpr uint32_t TFT_0_DC = 15;
-  constexpr uint32_t TFT_0_CS = 10;
-  constexpr uint32_t TFT_1_DC = 20;
-  constexpr uint32_t TFT_1_CS = 9;
+  constexpr uint32_t k_tft0_DC = 15;
+  constexpr uint32_t k_tft0_CS = 10;
+  constexpr uint32_t k_tft1_DC = 20;
+  constexpr uint32_t k_tft1_CS = 9;
   constexpr uint32_t k_menuTimeout = 3000000; // in ms
 
   // Instantiate display obj and properties; use hardware SPI (#13, #12, #11)
-  ILI9341_t3 tft[2] = {ILI9341_t3(TFT_0_CS, TFT_0_DC, 255, 11, 14),
-                       ILI9341_t3(TFT_1_CS, TFT_1_DC, 255 ,11, 14)};
+  ILI9341_t3 tft[2] = {ILI9341_t3(k_tft0_CS, k_tft0_DC, 255, 11, 14),
+                       ILI9341_t3(k_tft1_CS, k_tft1_DC, 255 ,11, 14)};
 
   Serial.begin(115200);
   uint32_t i;
@@ -106,7 +101,7 @@ int main() {
   menuHead->addChild(new MenuNode("Settings"));
   menuHead->addChild(new MenuNode("Other"));
 
-  gTeensy = new Teensy(head);
+  g_teensy = new Teensy(head);
 
   /* NODES: - must have all their attributes defined, but do not need to have
    * children
@@ -122,105 +117,105 @@ int main() {
   _3msInterrupt.begin(_3msISR, 3000);
 
   while (1) {
-    switch (gTeensy->displayState) {
+    switch (g_teensy->displayState) {
       // displaying dash only
       case DisplayState::Dash:
         // check if should display menu, this btnPress is not counted for menu navigation
-        if (gBtnPressEvents != BTN_NONE) {
+        if (g_btnPressEvents != BTN_NONE) {
           cli();
-          gTeensy->currentNode = gTeensy->currentNode->children[0]; // move to mainMenu node
+          g_teensy->currentNode = g_teensy->currentNode->children[0]; // move to mainMenu node
           sei();
 
-          gTeensy->displayState = DisplayState::Menu; // transition to menu state
-          gTeensy->redrawScreen = true;
+          g_teensy->displayState = DisplayState::Menu; // transition to menu state
+          g_teensy->redrawScreen = true;
 
           // Consume all button events
-          gBtnPressEvents = BTN_NONE;
+          g_btnPressEvents = BTN_NONE;
 
           // Start timeout
-          gTimeoutInterrupt.begin(timeoutISR, k_menuTimeout);
+          g_timeoutInterrupt.begin(timeoutISR, k_menuTimeout);
         }
         break;
       // displaying members of menu node tree
       case DisplayState::Menu:
         // Up, backward through child highlighted
-        if (gBtnPressEvents & BTN_UP) {
+        if (g_btnPressEvents & BTN_UP) {
           cli();
-          if (gTeensy->currentNode->childIndex > 0) {
-            gTeensy->currentNode->childIndex--;
+          if (g_teensy->currentNode->childIndex > 0) {
+            g_teensy->currentNode->childIndex--;
           } else {
-            gTeensy->currentNode->childIndex =
-                gTeensy->currentNode->children.size() - 1;
+            g_teensy->currentNode->childIndex =
+                g_teensy->currentNode->children.size() - 1;
           }
           sei();
 
-          gTeensy->redrawScreen = true;
+          g_teensy->redrawScreen = true;
 
-          gBtnPressEvents &= ~BTN_UP;
+          g_btnPressEvents &= ~BTN_UP;
         }
 
         // Right, into child
-        if (gBtnPressEvents & BTN_RIGHT) {
+        if (g_btnPressEvents & BTN_RIGHT) {
           // make sure node has children
           cli();
-          if (gTeensy->currentNode->children[gTeensy->currentNode->childIndex]->
+          if (g_teensy->currentNode->children[g_teensy->currentNode->childIndex]->
               children.size() > 0) {
             // move to the new node
-            gTeensy->currentNode =
-                gTeensy->currentNode->children[gTeensy->currentNode->childIndex];
-            gTeensy->redrawScreen = true;
+            g_teensy->currentNode =
+                g_teensy->currentNode->children[g_teensy->currentNode->childIndex];
+            g_teensy->redrawScreen = true;
           } else {
             // (should show that item has no children)
           }
           sei();
 
-          gBtnPressEvents &= ~BTN_RIGHT;
+          g_btnPressEvents &= ~BTN_RIGHT;
         }
 
         // Down, forward through child highlighted
-        if (gBtnPressEvents & BTN_DOWN) {
+        if (g_btnPressEvents & BTN_DOWN) {
           cli();
-          if (gTeensy->currentNode->childIndex ==
-              gTeensy->currentNode->children.size() - 1) {
-            gTeensy->currentNode->childIndex = 0;
+          if (g_teensy->currentNode->childIndex ==
+              g_teensy->currentNode->children.size() - 1) {
+            g_teensy->currentNode->childIndex = 0;
           } else {
-            gTeensy->currentNode->childIndex++;
+            g_teensy->currentNode->childIndex++;
           }
           sei();
 
-          gTeensy->redrawScreen = true;
+          g_teensy->redrawScreen = true;
 
-          gBtnPressEvents &= ~BTN_DOWN;
+          g_btnPressEvents &= ~BTN_DOWN;
         }
 
         // Left, out to parent
-        if (gBtnPressEvents & BTN_LEFT) {
+        if (g_btnPressEvents & BTN_LEFT) {
           cli();
-          gTeensy->currentNode = gTeensy->currentNode->parent;
-          if (gTeensy->currentNode->m_nodeType == NodeType::DashHead) {
-            gTeensy->displayState = DisplayState::Dash;
+          g_teensy->currentNode = g_teensy->currentNode->parent;
+          if (g_teensy->currentNode->m_nodeType == NodeType::DashHead) {
+            g_teensy->displayState = DisplayState::Dash;
           }
           sei();
 
-          gTeensy->redrawScreen = true;
+          g_teensy->redrawScreen = true;
 
-          gBtnPressEvents &= ~BTN_LEFT;
+          g_btnPressEvents &= ~BTN_LEFT;
         }
         break;
     }
 
     // Consume all unused events
-    gBtnReleaseEvents = BTN_NONE;
-    gBtnHeldEvents = BTN_NONE;
+    g_btnReleaseEvents = BTN_NONE;
+    g_btnHeldEvents = BTN_NONE;
 
     // Update display
-    if (gTeensy->redrawScreen) {
+    if (g_teensy->redrawScreen) {
       // Execute draw function for node
       cli();
-      gTeensy->currentNode->draw(tft);
+      g_teensy->currentNode->draw(tft);
       sei();
 
-      gTeensy->redrawScreen = false;
+      g_teensy->redrawScreen = false;
     }
   }
 }
@@ -230,17 +225,17 @@ void _500msISR() {
   static bool valDecreased, valIncreased;
   static Node* tempNode;
 
-  tempNode = gTeensy->currentNode;
+  tempNode = g_teensy->currentNode;
 
   // Check if node's observed pins changed in value and must re-render
   for (i = 0; i < tempNode->numPins; i++) {
     newVal = digitalReadFast(tempNode->pins[i]);
-    valDecreased = newVal - tempNode->pinVals[i] < -ADC_CHANGE_TOLERANCE;
-    valIncreased = newVal - tempNode->pinVals[i] > ADC_CHANGE_TOLERANCE;
+    valDecreased = newVal - tempNode->pinVals[i] < -k_adcChangeTolerance;
+    valIncreased = newVal - tempNode->pinVals[i] > k_adcChangeTolerance;
     if (valDecreased || valIncreased) {
-      // pin/adc val changed by more than ADC_CHANGE_TOLERANCE
+      // pin/adc val changed by more than k_adcChangeTolerance
       tempNode->pinVals[i] = newVal;
-      gTeensy->redrawScreen = true;
+      g_teensy->redrawScreen = true;
     }
   }
 }
@@ -255,13 +250,13 @@ void _3msISR() {
 }
 
 void timeoutISR() {
-  gTimeoutInterrupt.end();
+  g_timeoutInterrupt.end();
 
   // Return to dash state
-  gTeensy->currentNode = gTeensy->currentNode->parent;
+  g_teensy->currentNode = g_teensy->currentNode->parent;
 
-  gTeensy->displayState = DisplayState::Dash;
-  gTeensy->redrawScreen = true;
+  g_teensy->displayState = DisplayState::Dash;
+  g_teensy->redrawScreen = true;
 }
 
 void btnDebounce() {
@@ -275,40 +270,40 @@ void btnDebounce() {
   downButton.update();
   leftButton.update();
 
-  gBtnPressEvents |= upButton.pressed();
-  gBtnPressEvents |= rightButton.pressed() << 1;
-  gBtnPressEvents |= downButton.pressed() << 2;
-  gBtnPressEvents |= leftButton.pressed() << 3;
+  g_btnPressEvents |= upButton.pressed();
+  g_btnPressEvents |= rightButton.pressed() << 1;
+  g_btnPressEvents |= downButton.pressed() << 2;
+  g_btnPressEvents |= leftButton.pressed() << 3;
 
-  gBtnReleaseEvents |= upButton.released();
-  gBtnReleaseEvents |= rightButton.released() << 1;
-  gBtnReleaseEvents |= downButton.released() << 2;
-  gBtnReleaseEvents |= leftButton.released() << 3;
+  g_btnReleaseEvents |= upButton.released();
+  g_btnReleaseEvents |= rightButton.released() << 1;
+  g_btnReleaseEvents |= downButton.released() << 2;
+  g_btnReleaseEvents |= leftButton.released() << 3;
 
-  gBtnHeldEvents |= upButton.held();
-  gBtnHeldEvents |= rightButton.held() << 1;
-  gBtnHeldEvents |= downButton.held() << 2;
-  gBtnHeldEvents |= leftButton.held() << 3;
+  g_btnHeldEvents |= upButton.held();
+  g_btnHeldEvents |= rightButton.held() << 1;
+  g_btnHeldEvents |= downButton.held() << 2;
+  g_btnHeldEvents |= leftButton.held() << 3;
 }
 
 void canTx() {
-  static CAN_message_t gTxMsg;
+  static CAN_message_t txMsg;
 
-  gTxMsg.len = 8;
-  gTxMsg.id = 0x222;
+  txMsg.len = 8;
+  txMsg.id = 0x222;
   for (uint32_t i = 0; i < 8; i++) {
-    gTxMsg.buf[i] = '0' + i;
+    txMsg.buf[i] = '0' + i;
   }
 
   for (uint32_t i = 0; i < 6; i++) {
-    gCanBus->sendMessage(gTxMsg);
-    gTxMsg.buf[0]++;
+    g_canBus->sendMessage(txMsg);
+    txMsg.buf[0]++;
   }
 }
 
 void canRx() {
-  static CAN_message_t gRxMsg;
+  static CAN_message_t rxMsg;
 
-  while (gCanBus->recvMessage(gRxMsg)) {
+  while (g_canBus->recvMessage(rxMsg)) {
   }
 }
