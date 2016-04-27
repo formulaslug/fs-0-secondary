@@ -8,10 +8,10 @@
 /* Available sizes: 8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 24, 28, 32, 40, 60,
  *                  72, 96
  */
+#include "core_controls/ButtonTracker.h"
 #include "core_controls/CANopen.h"
 #include "libs/font_Arial.h"
 #include "libs/ILI9341_t3.h"
-#include "ButtonTracker.h"
 #include "DashNode.h"
 #include "MenuNode.h"
 #include "Teensy.h"
