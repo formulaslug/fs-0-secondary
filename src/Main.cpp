@@ -1,4 +1,4 @@
-// @desc Secondary control system for the UCSC's FSAE Electric Vehicle
+// @desc Secondary control system for UCSC's FSAE Electric Vehicle
 
 #include <cstdint>
 #include <atomic>
@@ -116,17 +116,26 @@ int main() {
   IntervalTimer _3msInterrupt;
   _3msInterrupt.begin(_3msISR, 3000);
 
+  /* Used as temporary safe storage for current node pointer, which could
+   * otherwise be changed by an ISR
+   */
+  Node* tempNode;
+
   while (1) {
     switch (g_teensy->displayState) {
-      // displaying dash only
+      // Display dash only
       case DisplayState::Dash:
-        // check if should display menu, this btnPress is not counted for menu navigation
+        /* Check if should display menu. This btnPress is not counted for menu
+         * navigation.
+         */
         if (g_btnPressEvents != BTN_NONE) {
           cli();
-          g_teensy->currentNode = g_teensy->currentNode->children[0]; // move to mainMenu node
+          // Move to mainMenu node
+          g_teensy->currentNode = g_teensy->currentNode->children[0];
           sei();
 
-          g_teensy->displayState = DisplayState::Menu; // transition to menu state
+          // Transition to menu state
+          g_teensy->displayState = DisplayState::Menu;
           g_teensy->redrawScreen = true;
 
           // Consume all button events
@@ -136,18 +145,19 @@ int main() {
           g_timeoutInterrupt.begin(timeoutISR, k_menuTimeout);
         }
         break;
-      // displaying members of menu node tree
+      // Display members of menu node tree
       case DisplayState::Menu:
         // Up, backward through child highlighted
         if (g_btnPressEvents & BTN_UP) {
           cli();
-          if (g_teensy->currentNode->childIndex > 0) {
-            g_teensy->currentNode->childIndex--;
-          } else {
-            g_teensy->currentNode->childIndex =
-                g_teensy->currentNode->children.size() - 1;
-          }
+          tempNode = g_teensy->currentNode;
           sei();
+
+          if (tempNode->childIndex > 0) {
+            tempNode->childIndex--;
+          } else {
+            tempNode->childIndex = tempNode->children.size() - 1;
+          }
 
           g_teensy->redrawScreen = true;
 
@@ -156,18 +166,20 @@ int main() {
 
         // Right, into child
         if (g_btnPressEvents & BTN_RIGHT) {
-          // make sure node has children
+          // Make sure node has children
           cli();
-          if (g_teensy->currentNode->children[g_teensy->currentNode->childIndex]->
-              children.size() > 0) {
-            // move to the new node
-            g_teensy->currentNode =
-                g_teensy->currentNode->children[g_teensy->currentNode->childIndex];
+          tempNode = g_teensy->currentNode;
+          sei();
+
+          if (tempNode->children[tempNode->childIndex]->children.size() > 0) {
+            // Move to the new node
+            cli();
+            g_teensy->currentNode = tempNode->children[tempNode->childIndex];
+            sei();
             g_teensy->redrawScreen = true;
           } else {
             // (should show that item has no children)
           }
-          sei();
 
           g_btnPressEvents &= ~BTN_RIGHT;
         }
@@ -175,13 +187,14 @@ int main() {
         // Down, forward through child highlighted
         if (g_btnPressEvents & BTN_DOWN) {
           cli();
-          if (g_teensy->currentNode->childIndex ==
-              g_teensy->currentNode->children.size() - 1) {
-            g_teensy->currentNode->childIndex = 0;
-          } else {
-            g_teensy->currentNode->childIndex++;
-          }
+          tempNode = g_teensy->currentNode;
           sei();
+
+          if (tempNode->childIndex == tempNode->children.size() - 1) {
+            tempNode->childIndex = 0;
+          } else {
+            tempNode->childIndex++;
+          }
 
           g_teensy->redrawScreen = true;
 
@@ -192,10 +205,12 @@ int main() {
         if (g_btnPressEvents & BTN_LEFT) {
           cli();
           g_teensy->currentNode = g_teensy->currentNode->parent;
-          if (g_teensy->currentNode->m_nodeType == NodeType::DashHead) {
+          tempNode = g_teensy->currentNode;
+          sei();
+
+          if (tempNode->m_nodeType == NodeType::DashHead) {
             g_teensy->displayState = DisplayState::Dash;
           }
-          sei();
 
           g_teensy->redrawScreen = true;
 
