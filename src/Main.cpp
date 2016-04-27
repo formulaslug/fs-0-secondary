@@ -1,12 +1,10 @@
-/*
- * @desc Pimary control system for the UCSC's Formula Slug Electric FSAE Vehicle
- * @dict LV = Low Voltage System, HV = High Voltage System, RTD = Ready-To-Drive
- */
+// @desc Secondary control system for the UCSC's FSAE Electric Vehicle
 
 // TODO: Need some button debounce
 
 #include <cstdint>
 #include <atomic>
+
 #include <IntervalTimer.h>
 
 /* Available sizes: 8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 24, 28, 32, 40, 60,
@@ -28,6 +26,15 @@ enum ButtonStates {
   BTN_LEFT = 0x8
 };
 
+void _500msISR();
+void _20msISR();
+void _3msISR();
+void timeoutISR();
+
+void btnDebounce();
+void canTx();
+void canRx();
+
 constexpr uint32_t ADC_CHANGE_TOLERANCE = 3;
 
 // Must be multiple of 20ms (1/50s)
@@ -39,69 +46,31 @@ constexpr uint32_t k_numBtns = 4;
 // First pin used by buttons. The rest follow in sequentially increasing order.
 constexpr uint32_t k_startBtnPin = 5;
 
-void _2hzTimer();
-void _50hzTimer();
-void btnDebounce();
+static IntervalTimer gTimeoutInterrupt;
 
 static Teensy* gTeensy;
 static CANopen* gCanBus = nullptr;
 
-static CAN_message_t gTxMsg;
-static CAN_message_t gRxMsg;
-
-static ButtonTracker<4> upButton(k_startBtnPin, false);
-static ButtonTracker<4> rightButton(k_startBtnPin + 1, false);
-static ButtonTracker<4> downButton(k_startBtnPin + 2, false);
-static ButtonTracker<4> leftButton(k_startBtnPin + 3, false);
 static std::atomic<uint8_t> gBtnPressEvents{0};
 static std::atomic<uint8_t> gBtnReleaseEvents{0};
 static std::atomic<uint8_t> gBtnHeldEvents{0};
-
-void canTxISR() {
-  gTxMsg.len = 8;
-  gTxMsg.id = 0x222;
-  for (uint32_t i = 0; i < 8; i++) {
-    gTxMsg.buf[i] = '0' + i;
-  }
-
-  for (uint32_t i = 0; i < 6; i++) {
-    if (!gCanBus->sendMessage(gTxMsg)) {
-      // Serial.println("tx failed");
-    }
-    gTxMsg.buf[0]++;
-  }
-}
-
-void canRxISR() {
-  while (gCanBus->recvMessage(gRxMsg)) {
-  }
-}
 
 int main() {
   constexpr uint32_t k_ID = 0x680;
   constexpr uint32_t k_baudRate = 500000;
   gCanBus = new CANopen(k_ID, k_baudRate);
 
-  IntervalTimer canTxInterrupt;
-  canTxInterrupt.begin(canTxISR, 100000);
-
-  IntervalTimer canRxInterrupt;
-  canRxInterrupt.begin(canRxISR, 3000);
-
   constexpr uint32_t TFT_0_DC = 15;
   constexpr uint32_t TFT_0_CS = 10;
   constexpr uint32_t TFT_1_DC = 20;
   constexpr uint32_t TFT_1_CS = 9;
-  constexpr uint32_t MENU_TIMEOUT = 5000; // in ms
+  constexpr uint32_t k_menuTimeout = 3000000; // in ms
 
   // Instantiate display obj and properties; use hardware SPI (#13, #12, #11)
   ILI9341_t3 tft[2] = {ILI9341_t3(TFT_0_CS, TFT_0_DC, 255, 11, 14),
                        ILI9341_t3(TFT_1_CS, TFT_1_DC, 255 ,11, 14)};
 
-  IntervalTimer interval50hz;
-  IntervalTimer interval2hz;
-
-  Serial.begin(9600);
+  Serial.begin(115200);
   uint32_t i;
   for (i = 0; i < 2; i++) {
     tft[i].begin();
@@ -143,58 +112,48 @@ int main() {
    * children
    */
 
-  // Set the interval timers
-  interval50hz.begin(_50hzTimer, 20000);
-  // interval2hz.begin(_2hzTimer, 500000);
+  IntervalTimer _500msInterrupt;
+  _500msInterrupt.begin(_500msISR, 500000);
+
+  IntervalTimer _20msInterrupt;
+  _20msInterrupt.begin(_20msISR, 20000);
+
+  IntervalTimer _3msInterrupt;
+  _3msInterrupt.begin(_3msISR, 3000);
 
   while (1) {
     switch (gTeensy->displayState) {
       // displaying dash only
       case DisplayState::Dash:
-        // check if should redraw screen
-        if (gTeensy->redrawScreen) {
-          // execute drawDash func. pointed to, to update display
-          gTeensy->currentNode->draw(tft);
-          gTeensy->redrawScreen = false;
-        }
-
         // check if should display menu, this btnPress is not counted for menu navigation
         if (gBtnPressEvents != BTN_NONE) {
-          Serial.println("Dash !NONE");
-
+          cli();
           gTeensy->currentNode = gTeensy->currentNode->children[0]; // move to mainMenu node
+          sei();
+
           gTeensy->displayState = DisplayState::Menu; // transition to menu state
           gTeensy->redrawScreen = true;
-          gTeensy->menuTimer = 0; // clear menu timeout timer
 
           // Consume all button events
           gBtnPressEvents = BTN_NONE;
+
+          // Start timeout
+          gTimeoutInterrupt.begin(timeoutISR, k_menuTimeout);
         }
         break;
       // displaying members of menu node tree
       case DisplayState::Menu:
-        if (gTeensy->redrawScreen) {
-          // execute draw func. pointed to in node, to update display
-          gTeensy->currentNode->draw(tft);
-          gTeensy->redrawScreen = false;
-        }
-
-        if (gTeensy->menuTimer > MENU_TIMEOUT) {
-          Serial.println("TIMEOUT");
-
-          // return to dash state
-          gTeensy->currentNode = gTeensy->currentNode->parent;
-          gTeensy->displayState = DisplayState::Dash;
-        }
-
         // Up, backward through child highlighted
         if (gBtnPressEvents & BTN_UP) {
+          cli();
           if (gTeensy->currentNode->childIndex > 0) {
             gTeensy->currentNode->childIndex--;
           } else {
             gTeensy->currentNode->childIndex =
                 gTeensy->currentNode->children.size() - 1;
           }
+          sei();
+
           gTeensy->redrawScreen = true;
 
           gBtnPressEvents &= ~BTN_UP;
@@ -203,6 +162,7 @@ int main() {
         // Right, into child
         if (gBtnPressEvents & BTN_RIGHT) {
           // make sure node has children
+          cli();
           if (gTeensy->currentNode->children[gTeensy->currentNode->childIndex]->
               children.size() > 0) {
             // move to the new node
@@ -212,18 +172,22 @@ int main() {
           } else {
             // (should show that item has no children)
           }
+          sei();
 
           gBtnPressEvents &= ~BTN_RIGHT;
         }
 
         // Down, forward through child highlighted
         if (gBtnPressEvents & BTN_DOWN) {
+          cli();
           if (gTeensy->currentNode->childIndex ==
               gTeensy->currentNode->children.size() - 1) {
             gTeensy->currentNode->childIndex = 0;
           } else {
             gTeensy->currentNode->childIndex++;
           }
+          sei();
+
           gTeensy->redrawScreen = true;
 
           gBtnPressEvents &= ~BTN_DOWN;
@@ -231,11 +195,14 @@ int main() {
 
         // Left, out to parent
         if (gBtnPressEvents & BTN_LEFT) {
+          cli();
           gTeensy->currentNode = gTeensy->currentNode->parent;
-          gTeensy->redrawScreen = true;
           if (gTeensy->currentNode->m_nodeType == NodeType::DashHead) {
             gTeensy->displayState = DisplayState::Dash;
           }
+          sei();
+
+          gTeensy->redrawScreen = true;
 
           gBtnPressEvents &= ~BTN_LEFT;
         }
@@ -245,40 +212,64 @@ int main() {
     // Consume all unused events
     gBtnReleaseEvents = BTN_NONE;
     gBtnHeldEvents = BTN_NONE;
+
+    // Update display
+    if (gTeensy->redrawScreen) {
+      // Execute draw function for node
+      cli();
+      gTeensy->currentNode->draw(tft);
+      sei();
+
+      gTeensy->redrawScreen = false;
+    }
   }
 }
 
-void _2hzTimer() {
+void _500msISR() {
   static uint32_t i, newVal;
   static bool valDecreased, valIncreased;
+  static Node* tempNode;
 
-  // @desc Check if node's observed pins changed in value and must re-render
-  for (i = 0; i < gTeensy->currentNode->numPins; i++) {
-    newVal = digitalReadFast(gTeensy->currentNode->pins[i]);
-    valDecreased =
-        ((newVal - gTeensy->currentNode->pinVals[i]) < -(ADC_CHANGE_TOLERANCE));
-    valIncreased =
-        ((newVal - gTeensy->currentNode->pinVals[i]) > (ADC_CHANGE_TOLERANCE));
+  tempNode = gTeensy->currentNode;
+
+  // Check if node's observed pins changed in value and must re-render
+  for (i = 0; i < tempNode->numPins; i++) {
+    newVal = digitalReadFast(tempNode->pins[i]);
+    valDecreased = newVal - tempNode->pinVals[i] < -ADC_CHANGE_TOLERANCE;
+    valIncreased = newVal - tempNode->pinVals[i] > ADC_CHANGE_TOLERANCE;
     if (valDecreased || valIncreased) {
       // pin/adc val changed by more than ADC_CHANGE_TOLERANCE
-      gTeensy->currentNode->pinVals[i] = newVal;
+      tempNode->pinVals[i] = newVal;
       gTeensy->redrawScreen = true;
     }
   }
-
-  // @desc Inc. menu timeout timer if in the menu state
-  if (gTeensy->displayState == DisplayState::Menu) {
-    gTeensy->menuTimer += 500; // 1/2 second
-  }
 }
 
-// @desc Sets button press state & performs debounce
-void _50hzTimer() {
+void _20msISR() {
   btnDebounce();
+  canTx();
 }
 
-// @desc Button debounce
+void _3msISR() {
+  canRx();
+}
+
+void timeoutISR() {
+  gTimeoutInterrupt.end();
+
+  // Return to dash state
+  gTeensy->currentNode = gTeensy->currentNode->parent;
+
+  gTeensy->displayState = DisplayState::Dash;
+  gTeensy->redrawScreen = true;
+}
+
 void btnDebounce() {
+  static ButtonTracker<4> upButton(k_startBtnPin, false);
+  static ButtonTracker<4> rightButton(k_startBtnPin + 1, false);
+  static ButtonTracker<4> downButton(k_startBtnPin + 2, false);
+  static ButtonTracker<4> leftButton(k_startBtnPin + 3, false);
+
   upButton.update();
   rightButton.update();
   downButton.update();
@@ -298,4 +289,26 @@ void btnDebounce() {
   gBtnHeldEvents |= rightButton.held() << 1;
   gBtnHeldEvents |= downButton.held() << 2;
   gBtnHeldEvents |= leftButton.held() << 3;
+}
+
+void canTx() {
+  static CAN_message_t gTxMsg;
+
+  gTxMsg.len = 8;
+  gTxMsg.id = 0x222;
+  for (uint32_t i = 0; i < 8; i++) {
+    gTxMsg.buf[i] = '0' + i;
+  }
+
+  for (uint32_t i = 0; i < 6; i++) {
+    gCanBus->sendMessage(gTxMsg);
+    gTxMsg.buf[0]++;
+  }
+}
+
+void canRx() {
+  static CAN_message_t gRxMsg;
+
+  while (gCanBus->recvMessage(gRxMsg)) {
+  }
 }

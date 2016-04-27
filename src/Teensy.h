@@ -1,7 +1,7 @@
 #ifndef TEENSY_H
 #define TEENSY_H
 
-#include <cstdint>
+#include <atomic>
 
 class Node;
 
@@ -14,10 +14,9 @@ enum class DisplayState {
 struct Teensy {
   Teensy(Node* currentNode);
 
-  DisplayState displayState = DisplayState::Dash;
+  std::atomic<DisplayState> displayState{DisplayState::Dash};
   Node* currentNode;
-  uint32_t menuTimer;
-  bool redrawScreen = true; // Trigger an initial rendering
+  std::atomic<bool> redrawScreen{true}; // Trigger an initial rendering
 };
 
 #endif // TEENSY_H
