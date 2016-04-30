@@ -51,19 +51,27 @@ static std::atomic<uint8_t> g_btnReleaseEvents{0};
 static std::atomic<uint8_t> g_btnHeldEvents{0};
 
 int main() {
-  constexpr uint32_t k_ID = 0x680;
-  constexpr uint32_t k_baudRate = 500000;
-  g_canBus = new CANopen(k_ID, k_baudRate);
-
-  constexpr uint32_t k_tft0_DC = 15;
-  constexpr uint32_t k_tft0_CS = 10;
-  constexpr uint32_t k_tft1_DC = 20;
-  constexpr uint32_t k_tft1_CS = 9;
+  constexpr uint32_t k_tftDC0 = 15;
+  constexpr uint32_t k_tftCS0 = 10;
+  constexpr uint32_t k_tftDC1 = 20;
+  constexpr uint32_t k_tftCS1 = 9;
+  constexpr uint32_t k_tftMOSI = 11;
+  constexpr uint32_t k_tftSCLK = 14;
   constexpr uint32_t k_menuTimeout = 3000000; // in ms
 
   // Instantiate display obj and properties; use hardware SPI (#13, #12, #11)
-  ILI9341_t3 tft[2] = {ILI9341_t3(k_tft0_CS, k_tft0_DC, 255, 11, 14),
-                       ILI9341_t3(k_tft1_CS, k_tft1_DC, 255 ,11, 14)};
+  ILI9341_t3 tft[2] = {ILI9341_t3(k_tftCS0, k_tftDC0, 255, k_tftMOSI,
+                                  k_tftSCLK),
+                       ILI9341_t3(k_tftCS1, k_tftDC1, 255, k_tftMOSI,
+                                  k_tftSCLK)};
+
+  /* The SPI bus needs to be initialized before CANopen to avoid a race
+   * condition with using the builtin LED pin (the ILI9341_t3 needs to unset
+   * that pin as the SPI clock before the CANopen class treats it as an LED).
+   */
+  constexpr uint32_t k_ID = 0x680;
+  constexpr uint32_t k_baudRate = 250000;
+  g_canBus = new CANopen(k_ID, k_baudRate);
 
   Serial.begin(115200);
   uint32_t i;
