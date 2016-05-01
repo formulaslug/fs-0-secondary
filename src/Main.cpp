@@ -74,6 +74,7 @@ int main() {
   g_canBus = new CANopen(k_ID, k_baudRate);
 
   Serial.begin(115200);
+
   uint32_t i;
   for (i = 0; i < 2; i++) {
     tft[i].begin();
@@ -129,6 +130,8 @@ int main() {
    */
   Node* tempNode;
 
+  Serial.println("[STATUS]: Initialized.");
+
   while (1) {
     switch (g_teensy->displayState) {
       // Display dash only
@@ -151,6 +154,8 @@ int main() {
 
           // Start timeout
           g_timeoutInterrupt.begin(timeoutISR, k_menuTimeout);
+
+          Serial.println("[EVENT]: Button pressed.");
         }
         break;
       // Display members of menu node tree
@@ -174,6 +179,8 @@ int main() {
           g_teensy->redrawScreen = true;
 
           g_btnPressEvents &= ~BTN_UP;
+
+          Serial.println("[EVENT]: Button <UP> pressed.");
         }
 
         // Right, into child
@@ -198,6 +205,8 @@ int main() {
           }
 
           g_btnPressEvents &= ~BTN_RIGHT;
+
+          Serial.println("[EVENT]: Button <RIGHT> pressed.");
         }
 
         // Down, forward through child highlighted
@@ -219,6 +228,8 @@ int main() {
           g_teensy->redrawScreen = true;
 
           g_btnPressEvents &= ~BTN_DOWN;
+
+          Serial.println("[EVENT]: Button <DOWN> pressed.");
         }
 
         // Left, out to parent
@@ -239,6 +250,9 @@ int main() {
           g_teensy->redrawScreen = true;
 
           g_btnPressEvents &= ~BTN_LEFT;
+
+          Serial.println("[EVENT]: Button <LEFT> pressed.");
+          
         }
         break;
     }
@@ -253,6 +267,9 @@ int main() {
       cli();
       g_teensy->currentNode->draw(tft);
       sei();
+
+      Serial.println("[EVENT]: Redrawing screen.");
+      
 
       g_teensy->redrawScreen = false;
     }
