@@ -157,6 +157,10 @@ int main() {
       case DisplayState::Menu:
         // Up, backward through child highlighted
         if (g_btnPressEvents & BTN_UP) {
+          // Reset timeout interrupt
+          g_timeoutInterrupt.end();
+          g_timeoutInterrupt.begin(timeoutISR, k_menuTimeout);
+
           cli();
           tempNode = g_teensy->currentNode;
           sei();
@@ -174,6 +178,10 @@ int main() {
 
         // Right, into child
         if (g_btnPressEvents & BTN_RIGHT) {
+          // Reset timeout interrupt
+          g_timeoutInterrupt.end();
+          g_timeoutInterrupt.begin(timeoutISR, k_menuTimeout);
+
           // Make sure node has children
           cli();
           tempNode = g_teensy->currentNode;
@@ -194,6 +202,10 @@ int main() {
 
         // Down, forward through child highlighted
         if (g_btnPressEvents & BTN_DOWN) {
+          // Reset timeout interrupt
+          g_timeoutInterrupt.end();
+          g_timeoutInterrupt.begin(timeoutISR, k_menuTimeout);
+
           cli();
           tempNode = g_teensy->currentNode;
           sei();
@@ -211,6 +223,10 @@ int main() {
 
         // Left, out to parent
         if (g_btnPressEvents & BTN_LEFT) {
+          // Reset timeout interrupt
+          g_timeoutInterrupt.end();
+          g_timeoutInterrupt.begin(timeoutISR, k_menuTimeout);
+
           cli();
           g_teensy->currentNode = g_teensy->currentNode->parent;
           tempNode = g_teensy->currentNode;
