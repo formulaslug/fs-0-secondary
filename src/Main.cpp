@@ -252,7 +252,7 @@ int main() {
           g_btnPressEvents &= ~BTN_LEFT;
 
           Serial.println("[EVENT]: Button <LEFT> pressed.");
-          
+
         }
         break;
     }
@@ -269,7 +269,7 @@ int main() {
       sei();
 
       Serial.println("[EVENT]: Redrawing screen.");
-      
+
 
       g_teensy->redrawScreen = false;
     }
