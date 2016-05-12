@@ -28,6 +28,7 @@ void _500msISR();
 void _20msISR();
 void _3msISR();
 void timeoutISR();
+inline void loadBuf(uint8_t * src, char * dest, uint32_t len);
 
 void btnDebounce();
 void canTx();
@@ -44,7 +45,12 @@ constexpr uint32_t k_startBtnPin = 5;
 static IntervalTimer g_timeoutInterrupt;
 
 static Teensy* g_teensy;
+
 static CANopen* g_canBus = nullptr;
+static CAN_message_t g_txMsg;
+static CAN_message_t g_rxMsg;
+static bool g_msgSent = false;
+static bool g_msgRecv = false;
 
 static std::atomic<uint8_t> g_btnPressEvents{0};
 static std::atomic<uint8_t> g_btnReleaseEvents{0};
@@ -133,6 +139,29 @@ int main() {
   Serial.println("[STATUS]: Initialized.");
 
   while (1) {
+    // service global flags
+    if (g_msgSent) {
+      // prepare message code, output buffer
+      char buf[9] = "00000000";
+      loadBuf(g_txMsg.buf, buf, 8);
+      // print
+      Serial.print("[EVENT]: CAN message transmitted. >>");
+      Serial.println(buf);
+      // clear flag
+      g_msgSent = false;
+    }
+    if (g_msgRecv) {
+      // prepare message code, output buffer
+      char buf[9] = "00000000";
+      loadBuf(g_rxMsg.buf, buf, 8);
+      // print
+      Serial.print("[EVENT]: CAN message received. >>");
+      Serial.println(buf);
+      // clear flag
+      g_msgRecv = false;
+    }
+
+    // service main state machine
     switch (g_teensy->displayState) {
       // Display dash only
       case DisplayState::Dash:
@@ -343,23 +372,41 @@ void btnDebounce() {
 }
 
 void canTx() {
-  static CAN_message_t txMsg;
+  static uint8_t count = 0;
+  ++count;
 
-  txMsg.len = 8;
-  txMsg.id = 0x222;
-  for (uint32_t i = 0; i < 8; i++) {
-    txMsg.buf[i] = '0' + i;
-  }
+  g_txMsg.len = 8;
+  g_txMsg.id = 0x222;
 
-  for (uint32_t i = 0; i < 6; i++) {
-    g_canBus->sendMessage(txMsg);
-    txMsg.buf[0]++;
+  // write a heartbeat to the CAN bus every 1s
+  if (count >= 50) {
+    // define msg code
+    for (uint32_t i = 0; i < 8; ++i) {
+      // set in msg buff, the 7-ith bit of the status code
+      g_txMsg.buf[7-i] = '0' + ((k_statusHeartbeat >> i) & 0x1);
+    }
+    // write to bus
+    g_canBus->sendMessage(g_txMsg);
+    // reset count
+    count = 0;
+    // set flag
+    g_msgSent = true;
   }
 }
 
 void canRx() {
-  static CAN_message_t rxMsg;
-
-  while (g_canBus->recvMessage(rxMsg)) {
+  while (g_canBus->recvMessage(g_rxMsg)) {
+    // set flag
+    g_msgRecv = true;
   }
+}
+
+// Cleans up serial printing of can messages for 8-bit message codes
+// loads every bit of src into every char of dest for a length of len
+inline void loadBuf(uint8_t * src, char * dest, uint32_t len) {
+  cli(); // disable interrupts
+  for (uint32_t i = 0; i < len; i++) {
+    dest[i] = src[i]; // set every char in the buffer
+  }
+  sei(); // enable interrupts
 }
