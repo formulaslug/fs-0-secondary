@@ -33,8 +33,8 @@ void timeoutISR();
 void btnDebounce();
 void canTx();
 void canRx();
-inline void printTx();
-inline void printRx();
+inline void printTx(); // prints the current message in g_msgSent
+inline void printRx(); // prints the current message in g_msgRecv
 
 constexpr uint32_t k_adcChangeTolerance = 3;
 
@@ -51,8 +51,8 @@ static Teensy* g_teensy;
 static CANopen* g_canBus = nullptr;
 static CAN_message_t g_txMsg;
 static CAN_message_t g_rxMsg;
-static bool g_msgSent = false;
-static bool g_msgRecv = false;
+static bool g_msgSent = false; // flag s.t. true=[message recently sent over can bus]
+static bool g_msgRecv = false; // flag s.t. true=[message recently received over can bus]
 
 static std::atomic<uint8_t> g_btnPressEvents{0};
 static std::atomic<uint8_t> g_btnReleaseEvents{0};
@@ -80,6 +80,7 @@ int main() {
   constexpr uint32_t k_ID = 0x680;
   constexpr uint32_t k_baudRate = 250000;
   g_canBus = new CANopen(k_ID, k_baudRate);
+  g_txMsg.id = 0x222; // id of node on CAN bus
 
   Serial.begin(115200);
 
@@ -142,20 +143,18 @@ int main() {
 
   while (1) {
     // service global flags
+    cli();
     if (g_msgSent) {
-      cli();
       printTx(); // g_txMsg is global..so no need to pass
-      sei();
       // clear flag
       g_msgSent = false;
     }
     if (g_msgRecv) {
-      cli();
       printRx(); // g_rxMsg is global..so no need to pass
-      sei();
       // clear flag
       g_msgRecv = false;
     }
+    sei();
 
     // service main state machine
     switch (g_teensy->displayState) {
@@ -368,23 +367,22 @@ void btnDebounce() {
 }
 
 void canTx() {
-  static uint8_t count = 0;
-  ++count;
+  static uint8_t heartbeatCount = 0;
+  ++heartbeatCount;
 
   g_txMsg.len = 2; // max length message codes in bytes
-  g_txMsg.id = 0x222;
 
-  // write a heartbeat to the CAN bus every 1s
-  if (count >= 50) {
+  // write a heartbeat to the CAN bus every 1s, (20ms * 50 = 1s)
+  if (heartbeatCount >= 50) {
     // define msg code
     for (uint32_t i = 0; i < 2; ++i) {
       // set in message buff, each byte of the message, from least to most significant
-      g_txMsg.buf[i] = (k_statusHeartbeat >> ((1-i)*8)) & 0xff;
+      g_txMsg.buf[i] = (k_statusHeartbeat >> ((1 - i) * 8)) & 0xff;
     }
     // write to bus
     g_canBus->sendMessage(g_txMsg);
     // reset count
-    count = 0;
+    heartbeatCount = 0;
     // set flag
     g_msgSent = true;
   }
@@ -396,7 +394,6 @@ void canRx() {
     g_msgRecv = true;
   }
 }
-
 
 // prints to serial, the currently transmitted message
 inline void printTx() {
