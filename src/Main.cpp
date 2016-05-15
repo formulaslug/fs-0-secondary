@@ -33,8 +33,6 @@ void timeoutISR();
 void btnDebounce();
 void canTx();
 void canRx();
-inline void printTx(); // prints the current message in g_msgSent
-inline void printRx(); // prints the current message in g_msgRecv
 
 constexpr uint32_t k_adcChangeTolerance = 3;
 
@@ -142,16 +140,18 @@ int main() {
   Serial.println("[STATUS]: Initialized.");
 
   while (1) {
-    // service global flags
+    // Service global flags
     cli();
     if (g_msgSent) {
-      printTx(); // g_txMsg is global..so no need to pass
-      // clear flag
+      g_canBus->printTx(g_txMsg);
+
+      // Clear flag
       g_msgSent = false;
     }
     if (g_msgRecv) {
-      printRx(); // g_rxMsg is global..so no need to pass
-      // clear flag
+      g_canBus->printRx(g_rxMsg);
+
+      // Clear flag
       g_msgRecv = false;
     }
     sei();
@@ -391,26 +391,4 @@ void canRx() {
     // set flag
     g_msgRecv = true;
   }
-}
-
-// prints to serial, the currently transmitted message
-inline void printTx() {
-  Serial.print("[EVENT]: CAN message transmitted. >> [ id: 0x");
-  Serial.print(g_txMsg.id, HEX); // the node's id
-  Serial.print(" , value: 0x");
-  for (uint32_t i = 0; i < g_txMsg.len; ++i) {
-    Serial.print(g_txMsg.buf[i], HEX); // the message contents
-  }
-  Serial.println(" ]");
-}
-
-// prints to serial, the currently received message
-inline void printRx() {
-  Serial.print("[EVENT]: CAN message received.    << [ id: 0x");
-  Serial.print(g_rxMsg.id, HEX); // the node's id
-  Serial.print(" , value: 0x");
-  for (uint32_t i = 0; i < g_rxMsg.len; ++i) {
-    Serial.print(g_rxMsg.buf[i], HEX); // the message contents
-  }
-  Serial.println(" ]");
 }
