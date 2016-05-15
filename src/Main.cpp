@@ -1,4 +1,5 @@
 /* @desc Secondary control system for UCSC's FSAE Electric Vehicle
+ *       CAN nodeID=4
  */
 
 #include <cstdint>
@@ -78,7 +79,7 @@ int main() {
   constexpr uint32_t k_ID = 0x680;
   constexpr uint32_t k_baudRate = 250000;
   g_canBus = new CANopen(k_ID, k_baudRate);
-  g_txMsg.id = 0x222; // id of node on CAN bus
+  g_txMsg.id = 0x004; // id of node on CAN bus
 
   Serial.begin(115200);
 
