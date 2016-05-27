@@ -4,3 +4,4 @@ TODO:
 - make menu drawing more efficient (fewer complete refreshes)
 - fix timeout so that it remembers state and returns to the dash (not just one level back up)
 - display primary teensy's current state (in FSM) by reading state changes off the CAN bus. Add this to dash state, tft[1] (the 2nd one)
+- flash "Ful Slamur" when throttle picked up off the CANopen bus is at 90% of max
