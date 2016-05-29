@@ -8,7 +8,8 @@ class Node;
 // Determines which GUI to display: dashboard or menu
 enum class DisplayState {
   Dash,
-  Menu
+  Menu,
+  Sensor
 };
 
 struct Teensy {
@@ -17,6 +18,7 @@ struct Teensy {
   std::atomic<DisplayState> displayState{DisplayState::Dash};
   Node* currentNode;
   std::atomic<bool> redrawScreen{true}; // Trigger an initial rendering
+  uint16_t inputThrottleVoltage;
 };
 
 #endif // TEENSY_H

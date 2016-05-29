@@ -16,6 +16,7 @@ typedef ILI9341_t3 Display;
 enum class NodeType {
   DashHead,
   MenuHead,
+  SensorNode,
   None,
 };
 

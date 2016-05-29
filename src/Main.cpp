@@ -16,6 +16,7 @@
 #include "libs/ILI9341_t3.h"
 #include "DashNode.h"
 #include "MenuNode.h"
+#include "SensorNode.h"
 #include "Teensy.h"
 
 enum ButtonStates {
@@ -108,7 +109,12 @@ int main() {
   head->addChild(menuHead);
 
   auto sensors = new MenuNode("Sensors");
-  sensors->addChild(new Node("Sensor 1"));
+
+  // configure throttle sensor
+  auto throttleSensor = new SensorNode("Input Throttle Voltage"); // create
+  throttleSensor->m_nodeType = NodeType::SensorNode;
+  sensors->addChild(throttleSensor);
+
   sensors->addChild(new Node("Sensor 2"));
   sensors->addChild(new Node("Sensor 3"));
   menuHead->addChild(sensors);
@@ -149,6 +155,18 @@ int main() {
     g_canBus->printRxAll();
     sei();
 
+    // process all received messages
+    CAN_message_t msg;
+    while (g_canBus->rxQueueSize() > 0) {
+      msg = g_canBus->dequeueRxMsg();
+      // TODO: find another solution to this branching for msg unpacking functions
+      if (msg.id == cobid_p2s) {
+        // msg is the primary-to-secondary message
+        // update input throttle voltage
+        g_teensy->inputThrottleVoltage = (msg.buf[3] << 8) + msg.buf[4]; // concatenate MSB & LSB
+      }
+    }
+
     // service main state machine
     switch (g_teensy->displayState) {
       // Display dash only
@@ -176,6 +194,7 @@ int main() {
         }
         break;
       // Display members of menu node tree
+      case DisplayState::Sensor:
       case DisplayState::Menu:
         // Up, backward through child highlighted
         if (g_btnPressEvents & BTN_UP) {
@@ -284,6 +303,7 @@ int main() {
       g_teensy->currentNode->draw(tft);
       sei();
 
+      Serial.println(g_teensy->currentNode, HEX);
       Serial.println("[EVENT]: Redrawing screen.");
 
       g_teensy->redrawScreen = false;
@@ -296,7 +316,7 @@ int main() {
  */
 void _1sISR() {
   // enqueue heartbeat message to g_canTxQueue
-  g_canBus->queueTx(canGetHeartbeat());
+  g_canBus->queueTxMsg(canGetHeartbeat());
 }
 
 void _500msISR() {
