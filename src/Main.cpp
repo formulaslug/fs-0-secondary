@@ -26,14 +26,17 @@ enum ButtonStates {
   BTN_LEFT = 0x8
 };
 
+// timer interrupt handlers
+void _1sISR();
 void _500msISR();
 void _20msISR();
 void _3msISR();
 void timeoutISR();
 
+// declarations of the can message packing functions
+CAN_message_t canGetHeartbeat();
+
 void btnDebounce();
-void canTx();
-void canRx();
 
 constexpr uint32_t k_adcChangeTolerance = 3;
 
@@ -48,10 +51,6 @@ static IntervalTimer g_timeoutInterrupt;
 static Teensy* g_teensy;
 
 static CANopen* g_canBus = nullptr;
-static CAN_message_t g_txMsg;
-static CAN_message_t g_rxMsg;
-static bool g_msgSent = false; // flag s.t. true=[message recently sent over can bus]
-static bool g_msgRecv = false; // flag s.t. true=[message recently received over can bus]
 
 static std::atomic<uint8_t> g_btnPressEvents{0};
 static std::atomic<uint8_t> g_btnReleaseEvents{0};
@@ -79,7 +78,6 @@ int main() {
   constexpr uint32_t k_ID = 0x680;
   constexpr uint32_t k_baudRate = 250000;
   g_canBus = new CANopen(k_ID, k_baudRate);
-  g_txMsg.id = 0x004; // id of node on CAN bus
 
   Serial.begin(115200);
 
@@ -124,6 +122,9 @@ int main() {
    * children
    */
 
+  IntervalTimer _1sInterrupt;
+  _1sInterrupt.begin(_1sISR, 1000000);
+
   IntervalTimer _500msInterrupt;
   _500msInterrupt.begin(_500msISR, 500000);
 
@@ -141,20 +142,11 @@ int main() {
   Serial.println("[STATUS]: Initialized.");
 
   while (1) {
-    // Service global flags
     cli();
-    if (g_msgSent) {
-      g_canBus->printTx(g_txMsg);
-
-      // Clear flag
-      g_msgSent = false;
-    }
-    if (g_msgRecv) {
-      g_canBus->printRx(g_rxMsg);
-
-      // Clear flag
-      g_msgRecv = false;
-    }
+    // print all transmitted messages
+    g_canBus->printTxAll();
+    // print all received messages
+    g_canBus->printRxAll();
     sei();
 
     // service main state machine
@@ -299,6 +291,14 @@ int main() {
   }
 }
 
+/**
+ * @desc Performs period tasks every second
+ */
+void _1sISR() {
+  // enqueue heartbeat message to g_canTxQueue
+  g_canBus->queueTx(canGetHeartbeat());
+}
+
 void _500msISR() {
   static uint32_t i, newVal;
   static bool valDecreased, valIncreased;
@@ -321,11 +321,11 @@ void _500msISR() {
 
 void _20msISR() {
   btnDebounce();
-  canTx();
+  g_canBus->processTx();
 }
 
 void _3msISR() {
-  canRx();
+  g_canBus->processRx();
 }
 
 void timeoutISR() {
@@ -365,31 +365,59 @@ void btnDebounce() {
   g_btnHeldEvents |= leftButton.held() << 3;
 }
 
-void canTx() {
-  static uint8_t heartbeatCount = 0;
-  ++heartbeatCount;
+/**
+ * @desc Writes the node's heartbeat to the CAN bus every 1s
+ * @return The packaged message of type CAN_message_t
+ */
+// TODO: bring this into core controls and have it use a node id that is received by the
+//    CANopen constructor
+CAN_message_t canGetHeartbeat() {
+  static bool didInit = false;
+  // heartbeat message formatted with: COB-ID=0x001, len=2
+  static CAN_message_t heartbeatMsg = {
+    cobid_node4Heartbeat, 0, 2, 0, {0, 0, 0, 0, 0, 0, 0, 0}
+  };
 
-  g_txMsg.len = 2; // max length message codes in bytes
-
-  // write a heartbeat to the CAN bus every 1s, (20ms * 50 = 1s)
-  if (heartbeatCount >= 50) {
-    // define msg code
+  // insert the heartbeat payload on the first call
+  if (!didInit) {
+    // TODO: add this statically into the initialization of heartbeatMsg
+    // populate payload (only once)
     for (uint32_t i = 0; i < 2; ++i) {
       // set in message buff, each byte of the message, from least to most significant
-      g_txMsg.buf[i] = (k_statusHeartbeat >> ((1 - i) * 8)) & 0xff;
+      heartbeatMsg.buf[i] = (payload_heartbeat >> ((1 - i) * 8)) & 0xff;
     }
-    // write to bus
-    g_canBus->sendMessage(g_txMsg);
-    // reset count
-    heartbeatCount = 0;
-    // set flag
-    g_msgSent = true;
+    didInit = true;
   }
+  // return the packed/formatted message
+  return heartbeatMsg;
 }
 
-void canRx() {
-  while (g_canBus->recvMessage(g_rxMsg)) {
-    // set flag
-    g_msgRecv = true;
-  }
-}
+
+// void canTx() {
+//   static uint8_t heartbeatCount = 0;
+//   ++heartbeatCount;
+//
+//   g_txMsg.len = 2; // max length message codes in bytes
+//
+//   // write a heartbeat to the CAN bus every 1s, (20ms * 50 = 1s)
+//   if (heartbeatCount >= 50) {
+//     // define msg code
+//     for (uint32_t i = 0; i < 2; ++i) {
+//       // set in message buff, each byte of the message, from least to most significant
+//       g_txMsg.buf[i] = (k_statusHeartbeat >> ((1 - i) * 8)) & 0xff;
+//     }
+//     // write to bus
+//     g_canBus->sendMessage(g_txMsg);
+//     // reset count
+//     heartbeatCount = 0;
+//     // set flag
+//     g_msgSent = true;
+//   }
+// }
+//
+// void canRx() {
+//   while (g_canBus->recvMessage(g_rxMsg)) {
+//     // set flag
+//     g_msgRecv = true;
+//   }
+// }
