@@ -391,33 +391,3 @@ CAN_message_t canGetHeartbeat() {
   // return the packed/formatted message
   return heartbeatMsg;
 }
-
-
-// void canTx() {
-//   static uint8_t heartbeatCount = 0;
-//   ++heartbeatCount;
-//
-//   g_txMsg.len = 2; // max length message codes in bytes
-//
-//   // write a heartbeat to the CAN bus every 1s, (20ms * 50 = 1s)
-//   if (heartbeatCount >= 50) {
-//     // define msg code
-//     for (uint32_t i = 0; i < 2; ++i) {
-//       // set in message buff, each byte of the message, from least to most significant
-//       g_txMsg.buf[i] = (k_statusHeartbeat >> ((1 - i) * 8)) & 0xff;
-//     }
-//     // write to bus
-//     g_canBus->sendMessage(g_txMsg);
-//     // reset count
-//     heartbeatCount = 0;
-//     // set flag
-//     g_msgSent = true;
-//   }
-// }
-//
-// void canRx() {
-//   while (g_canBus->recvMessage(g_rxMsg)) {
-//     // set flag
-//     g_msgRecv = true;
-//   }
-// }
