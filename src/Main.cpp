@@ -296,7 +296,7 @@ int main() {
  */
 void _1sISR() {
   // enqueue heartbeat message to g_canTxQueue
-  g_canBus->queueTx(canGetHeartbeat());
+  g_canBus->queueTxMsg(canGetHeartbeat());
 }
 
 void _500msISR() {
