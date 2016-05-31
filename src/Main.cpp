@@ -296,7 +296,7 @@ int main() {
  */
 void _1sISR() {
   // enqueue heartbeat message to g_canTxQueue
-  g_canBus->queueTxMsg(canGetHeartbeat());
+  g_canBus->queueTxMessage(canGetHeartbeat());
 }
 
 void _500msISR() {
@@ -321,11 +321,11 @@ void _500msISR() {
 
 void _20msISR() {
   btnDebounce();
-  g_canBus->processTx();
+  g_canBus->processTxMessages();
 }
 
 void _3msISR() {
-  g_canBus->processRx();
+  g_canBus->processRxMessages();
 }
 
 void timeoutISR() {
