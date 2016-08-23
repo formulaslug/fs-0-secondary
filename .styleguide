@@ -2,6 +2,8 @@ genFolderExclude {
 }
 
 genFileExclude {
+  \.elf$
+  \.hex$
 }
 
 modifiableFolderExclude {
