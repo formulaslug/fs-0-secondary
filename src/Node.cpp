@@ -5,7 +5,8 @@
 #include <cstring>
 
 Node::Node(const char* nameStr) {
-  std::strncpy(name, nameStr);  // NOLINT
+  // strncpy() doesn't exist on this platform, so tell the linter to ignore it
+  std::strcpy(name, nameStr);  // NOLINT
 }
 
 void Node::addChild(Node* child) {
