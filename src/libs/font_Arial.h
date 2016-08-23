@@ -27,7 +27,7 @@ extern const ILI9341_t3_font_t Arial_72;
 extern const ILI9341_t3_font_t Arial_96;
 
 #ifdef __cplusplus
-} // extern "C"
+}  // extern "C"
 #endif
 
 #endif

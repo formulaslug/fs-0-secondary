@@ -1,3 +1,5 @@
+// Copyright (c) Formula Slug 2016. All Rights Reserved.
+
 #include "MenuNode.h"
 
 #include <cstdio>
@@ -40,6 +42,7 @@ void MenuNode::draw(Display* displays) {
   displays[1].setFont(Arial_20);
 
   char str[30];
-  sprintf(str, "[This is <%s> node data]", children[childIndex]->name);
+  std::snprintf(str, "[This is <%s> node data]", children[childIndex]->name,
+                30);
   displays[1].print(str);
 }

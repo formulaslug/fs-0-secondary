@@ -1,0 +1,15 @@
+genFolderExclude {
+}
+
+genFileExclude {
+}
+
+modifiableFolderExclude {
+  \.git
+  build
+  core_controls
+  libs
+}
+
+modifiableFileExclude {
+}

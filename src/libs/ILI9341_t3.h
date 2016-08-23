@@ -20,7 +20,7 @@
 #define _ILI9341_t3H_
 
 #ifdef __cplusplus
-  #include "Arduino.h"
+#include "Arduino.h"
 #endif
 
 #define ILI9341_TFTWIDTH 240
@@ -85,26 +85,25 @@
 */
 
 // Color definitions
-#define ILI9341_BLACK 0x0000      /*   0,   0,   0 */
-#define ILI9341_NAVY 0x000F      /*   0,   0, 128 */
-#define ILI9341_DARKGREEN 0x03E0      /*   0, 128,   0 */
-#define ILI9341_DARKCYAN 0x03EF      /*   0, 128, 128 */
+#define ILI9341_BLACK 0x0000       /*   0,   0,   0 */
+#define ILI9341_NAVY 0x000F        /*   0,   0, 128 */
+#define ILI9341_DARKGREEN 0x03E0   /*   0, 128,   0 */
+#define ILI9341_DARKCYAN 0x03EF    /*   0, 128, 128 */
 #define ILI9341_MAROON 0x7800      /* 128,   0,   0 */
 #define ILI9341_PURPLE 0x780F      /* 128,   0, 128 */
-#define ILI9341_OLIVE 0x7BE0      /* 128, 128,   0 */
-#define ILI9341_LIGHTGREY 0xC618      /* 192, 192, 192 */
-#define ILI9341_DARKGREY 0x7BEF      /* 128, 128, 128 */
-#define ILI9341_BLUE 0x001F      /*   0,   0, 255 */
-#define ILI9341_GREEN 0x07E0      /*   0, 255,   0 */
-#define ILI9341_CYAN 0x07FF      /*   0, 255, 255 */
-#define ILI9341_RED 0xF800      /* 255,   0,   0 */
-#define ILI9341_MAGENTA 0xF81F      /* 255,   0, 255 */
+#define ILI9341_OLIVE 0x7BE0       /* 128, 128,   0 */
+#define ILI9341_LIGHTGREY 0xC618   /* 192, 192, 192 */
+#define ILI9341_DARKGREY 0x7BEF    /* 128, 128, 128 */
+#define ILI9341_BLUE 0x001F        /*   0,   0, 255 */
+#define ILI9341_GREEN 0x07E0       /*   0, 255,   0 */
+#define ILI9341_CYAN 0x07FF        /*   0, 255, 255 */
+#define ILI9341_RED 0xF800         /* 255,   0,   0 */
+#define ILI9341_MAGENTA 0xF81F     /* 255,   0, 255 */
 #define ILI9341_YELLOW 0xFFE0      /* 255, 255,   0 */
-#define ILI9341_WHITE 0xFFFF      /* 255, 255, 255 */
+#define ILI9341_WHITE 0xFFFF       /* 255, 255, 255 */
 #define ILI9341_ORANGE 0xFD20      /* 255, 165,   0 */
-#define ILI9341_GREENYELLOW 0xAFE5      /* 173, 255,  47 */
+#define ILI9341_GREENYELLOW 0xAFE5 /* 173, 255,  47 */
 #define ILI9341_PINK 0xF81F
-
 
 typedef struct {
   const unsigned char* index;
@@ -126,17 +125,12 @@ typedef struct {
   unsigned char cap_height;
 } ILI9341_t3_font_t;
 
-
 #ifdef __cplusplus
 
 class ILI9341_t3 : public Print {
  public:
-  ILI9341_t3(uint8_t _CS,
-      uint8_t _DC,
-      uint8_t _RST = 255,
-      uint8_t _MOSI = 11,
-      uint8_t _SCLK = 13,
-      uint8_t _MISO = 12);
+  ILI9341_t3(uint8_t _CS, uint8_t _DC, uint8_t _RST = 255, uint8_t _MOSI = 11,
+             uint8_t _SCLK = 13, uint8_t _MISO = 12);
   void begin(void);
   void sleep(bool enable);
   void pushColor(uint16_t color);
@@ -154,70 +148,34 @@ class ILI9341_t3 : public Print {
     return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
   }
 
-  //uint8_t readdata(void);
+  // uint8_t readdata(void);
   uint8_t readcommand8(uint8_t reg, uint8_t index = 0);
 
   // Added functions to read pixel data...
   uint16_t readPixel(int16_t x, int16_t y);
   void readRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t* pcolors);
-  void writeRect(int16_t x,
-      int16_t y,
-      int16_t w,
-      int16_t h,
-      const uint16_t* pcolors);
+  void writeRect(int16_t x, int16_t y, int16_t w, int16_t h,
+                 const uint16_t* pcolors);
 
   // from Adafruit_GFX.h
   void drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color);
-  void drawCircleHelper(int16_t x0,
-      int16_t y0,
-      int16_t r,
-      uint8_t cornername,
-      uint16_t color);
+  void drawCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername,
+                        uint16_t color);
   void fillCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color);
-  void fillCircleHelper(int16_t x0,
-      int16_t y0,
-      int16_t r,
-      uint8_t cornername,
-      int16_t delta,
-      uint16_t color);
-  void drawTriangle(int16_t x0,
-      int16_t y0,
-      int16_t x1,
-      int16_t y1,
-      int16_t x2,
-      int16_t y2,
-      uint16_t color);
-  void fillTriangle(int16_t x0,
-      int16_t y0,
-      int16_t x1,
-      int16_t y1,
-      int16_t x2,
-      int16_t y2,
-      uint16_t color);
-  void drawRoundRect(int16_t x0,
-      int16_t y0,
-      int16_t w,
-      int16_t h,
-      int16_t radius,
-      uint16_t color);
-  void fillRoundRect(int16_t x0,
-      int16_t y0,
-      int16_t w,
-      int16_t h,
-      int16_t radius,
-      uint16_t color);
-  void drawBitmap(int16_t x,
-      int16_t y,
-      const uint8_t* bitmap,
-      int16_t w,
-      int16_t h,
-      uint16_t color);
-  void drawChar(int16_t x,
-      int16_t y,
-      unsigned char c,
-      uint16_t color,
-      uint16_t bg,
-      uint8_t size);
+  void fillCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername,
+                        int16_t delta, uint16_t color);
+  void drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2,
+                    int16_t y2, uint16_t color);
+  void fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2,
+                    int16_t y2, uint16_t color);
+  void drawRoundRect(int16_t x0, int16_t y0, int16_t w, int16_t h,
+                     int16_t radius, uint16_t color);
+  void fillRoundRect(int16_t x0, int16_t y0, int16_t w, int16_t h,
+                     int16_t radius, uint16_t color);
+  void drawBitmap(int16_t x, int16_t y, const uint8_t* bitmap, int16_t w,
+                  int16_t h, uint16_t color);
+  void drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color,
+                uint16_t bg, uint8_t size);
   void setCursor(int16_t x, int16_t y);
   void setTextColor(uint16_t c);
   void setTextColor(uint16_t c, uint16_t bg);
@@ -226,7 +184,7 @@ class ILI9341_t3 : public Print {
   void setTextWrap(boolean w);
   boolean getTextWrap();
   virtual size_t write(uint8_t);
-  int16_t width(void)  { return _width; }
+  int16_t width(void) { return _width; }
   int16_t height(void) { return _height; }
   uint8_t getRotation(void);
   void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color);
@@ -238,11 +196,11 @@ class ILI9341_t3 : public Print {
   void drawFontChar(unsigned int c);
 
  protected:
-  int16_t _width, _height; // Display w/h as modified by current rotation
+  int16_t _width, _height;  // Display w/h as modified by current rotation
   int16_t cursor_x, cursor_y;
   uint16_t textcolor, textbgcolor;
   uint8_t textsize, rotation;
-  boolean wrap; // If set, 'wrap' text at right edge of display
+  boolean wrap;  // If set, 'wrap' text at right edge of display
   const ILI9341_t3_font_t* font;
 
   uint8_t _rst;
@@ -251,15 +209,15 @@ class ILI9341_t3 : public Print {
   uint8_t _miso, _mosi, _sclk;
 
   void setAddr(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
-  __attribute__((always_inline)) {
-    writecommand_cont(ILI9341_CASET); // Column addr set
-    writedata16_cont(x0);   // XSTART
-    writedata16_cont(x1);   // XEND
-    writecommand_cont(ILI9341_PASET); // Row addr set
-    writedata16_cont(y0);   // YSTART
-    writedata16_cont(y1);   // YEND
+      __attribute__((always_inline)) {
+    writecommand_cont(ILI9341_CASET);  // Column addr set
+    writedata16_cont(x0);              // XSTART
+    writedata16_cont(x1);              // XEND
+    writecommand_cont(ILI9341_PASET);  // Row addr set
+    writedata16_cont(y0);              // YSTART
+    writedata16_cont(y1);              // YEND
   }
-  //void waitFifoNotFull(void) __attribute__((always_inline)) {
+  // void waitFifoNotFull(void) __attribute__((always_inline)) {
   void waitFifoNotFull(void) {
     uint32_t sr;
     uint32_t tmp __attribute__((unused));
@@ -278,13 +236,13 @@ class ILI9341_t3 : public Print {
       if (sr & 0xF0) {
         tmp = KINETISK_SPI0.POPR;  // drain RX FIFO
       }
-    } while ((sr & 0xF0F0) > 0);             // wait both RX & TX empty
+    } while ((sr & 0xF0F0) > 0);  // wait both RX & TX empty
   }
   void waitTransmitComplete(void) __attribute__((always_inline)) {
     uint32_t tmp __attribute__((unused));
-    while (!(KINETISK_SPI0.SR & SPI_SR_TCF)) { // wait until final output done
+    while (!(KINETISK_SPI0.SR & SPI_SR_TCF)) {  // wait until final output done
     }
-    tmp = KINETISK_SPI0.POPR;                  // drain the final RX FIFO word
+    tmp = KINETISK_SPI0.POPR;  // drain the final RX FIFO word
   }
   void waitTransmitComplete(uint32_t mcr) __attribute__((always_inline)) {
     uint32_t tmp __attribute__((unused));
@@ -293,7 +251,9 @@ class ILI9341_t3 : public Print {
       if (sr & SPI_SR_EOQF) {
         break;  // wait for last transmit
       }
-      if (sr &  0xF0) {tmp = KINETISK_SPI0.POPR; }
+      if (sr & 0xF0) {
+        tmp = KINETISK_SPI0.POPR;
+      }
     }
     KINETISK_SPI0.SR = SPI_SR_EOQF;
     SPI0_MCR = mcr;
@@ -302,40 +262,40 @@ class ILI9341_t3 : public Print {
     }
   }
   void writecommand_cont(uint8_t c) __attribute__((always_inline)) {
-    KINETISK_SPI0.PUSHR = c | (pcs_command << 16) | SPI_PUSHR_CTAS(0) |
-        SPI_PUSHR_CONT;
+    KINETISK_SPI0.PUSHR =
+        c | (pcs_command << 16) | SPI_PUSHR_CTAS(0) | SPI_PUSHR_CONT;
     waitFifoNotFull();
   }
   void writedata8_cont(uint8_t c) __attribute__((always_inline)) {
-    KINETISK_SPI0.PUSHR = c | (pcs_data << 16) | SPI_PUSHR_CTAS(0) |
-        SPI_PUSHR_CONT;
+    KINETISK_SPI0.PUSHR =
+        c | (pcs_data << 16) | SPI_PUSHR_CTAS(0) | SPI_PUSHR_CONT;
     waitFifoNotFull();
   }
   void writedata16_cont(uint16_t d) __attribute__((always_inline)) {
-    KINETISK_SPI0.PUSHR = d | (pcs_data << 16) | SPI_PUSHR_CTAS(1) |
-        SPI_PUSHR_CONT;
+    KINETISK_SPI0.PUSHR =
+        d | (pcs_data << 16) | SPI_PUSHR_CTAS(1) | SPI_PUSHR_CONT;
     waitFifoNotFull();
   }
   void writecommand_last(uint8_t c) __attribute__((always_inline)) {
     uint32_t mcr = SPI0_MCR;
-    KINETISK_SPI0.PUSHR = c | (pcs_command << 16) | SPI_PUSHR_CTAS(0) |
-        SPI_PUSHR_EOQ;
+    KINETISK_SPI0.PUSHR =
+        c | (pcs_command << 16) | SPI_PUSHR_CTAS(0) | SPI_PUSHR_EOQ;
     waitTransmitComplete(mcr);
   }
   void writedata8_last(uint8_t c) __attribute__((always_inline)) {
     uint32_t mcr = SPI0_MCR;
-    KINETISK_SPI0.PUSHR = c | (pcs_data << 16) | SPI_PUSHR_CTAS(0) |
-        SPI_PUSHR_EOQ;
+    KINETISK_SPI0.PUSHR =
+        c | (pcs_data << 16) | SPI_PUSHR_CTAS(0) | SPI_PUSHR_EOQ;
     waitTransmitComplete(mcr);
   }
   void writedata16_last(uint16_t d) __attribute__((always_inline)) {
     uint32_t mcr = SPI0_MCR;
-    KINETISK_SPI0.PUSHR = d | (pcs_data << 16) | SPI_PUSHR_CTAS(1) |
-        SPI_PUSHR_EOQ;
+    KINETISK_SPI0.PUSHR =
+        d | (pcs_data << 16) | SPI_PUSHR_CTAS(1) | SPI_PUSHR_EOQ;
     waitTransmitComplete(mcr);
   }
   void HLine(int16_t x, int16_t y, int16_t w, uint16_t color)
-  __attribute__((always_inline)) {
+      __attribute__((always_inline)) {
     setAddr(x, y, x + w - 1, y);
     writecommand_cont(ILI9341_RAMWR);
     do {
@@ -343,7 +303,7 @@ class ILI9341_t3 : public Print {
     } while (--w > 0);
   }
   void VLine(int16_t x, int16_t y, int16_t h, uint16_t color)
-  __attribute__((always_inline)) {
+      __attribute__((always_inline)) {
     setAddr(x, y, x, y + h - 1);
     writecommand_cont(ILI9341_RAMWR);
     do {
@@ -351,25 +311,21 @@ class ILI9341_t3 : public Print {
     } while (--h > 0);
   }
   void Pixel(int16_t x, int16_t y, uint16_t color)
-  __attribute__((always_inline)) {
+      __attribute__((always_inline)) {
     setAddr(x, y, x, y);
     writecommand_cont(ILI9341_RAMWR);
     writedata16_cont(color);
   }
-  void drawFontBits(uint32_t bits,
-      uint32_t numbits,
-      uint32_t x,
-      uint32_t y,
-      uint32_t repeat);
+  void drawFontBits(uint32_t bits, uint32_t numbits, uint32_t x, uint32_t y,
+                    uint32_t repeat);
 };
 
 class Adafruit_GFX_Button {
  public:
   Adafruit_GFX_Button(void) { _gfx = NULL; }
-  void initButton(ILI9341_t3* gfx, int16_t x, int16_t y,
-      uint8_t w, uint8_t h,
-      uint16_t outline, uint16_t fill, uint16_t textcolor,
-      const char* label, uint8_t textsize);
+  void initButton(ILI9341_t3* gfx, int16_t x, int16_t y, uint8_t w, uint8_t h,
+                  uint16_t outline, uint16_t fill, uint16_t textcolor,
+                  const char* label, uint8_t textsize);
   void drawButton(bool inverted = false);
   bool contains(int16_t x, int16_t y);
   void press(boolean p) {
@@ -377,8 +333,8 @@ class Adafruit_GFX_Button {
     currstate = p;
   }
   bool isPressed() { return currstate; }
-  bool justPressed() { return currstate && !laststate;  }
-  bool justReleased() { return !currstate && laststate;  }
+  bool justPressed() { return currstate && !laststate; }
+  bool justReleased() { return !currstate && laststate; }
 
  private:
   ILI9341_t3* _gfx;
@@ -390,7 +346,6 @@ class Adafruit_GFX_Button {
   boolean currstate, laststate;
 };
 
-#endif // __cplusplus
-
+#endif  // __cplusplus
 
 #endif

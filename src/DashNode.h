@@ -1,3 +1,5 @@
+// Copyright (c) Formula Slug 2016. All Rights Reserved.
+
 #ifndef DASH_NODE_H
 #define DASH_NODE_H
 
@@ -5,9 +7,9 @@
 
 class DashNode : public Node {
  public:
-  DashNode(const char* nameStr = "- - no name - -");
+  explicit DashNode(const char* nameStr = "- - no name - -");
 
   void draw(Display* displays) override;
 };
 
-#endif // DASH_NODE_H
+#endif  // DASH_NODE_H

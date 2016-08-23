@@ -1,7 +1,10 @@
+// Copyright (c) Formula Slug 2016. All Rights Reserved.
+
 #ifndef NODE_H
 #define NODE_H
 
-#include <cstdint>
+#include <stdint.h>
+
 #include <vector>
 
 #include <ILI9341_t3.h>
@@ -21,7 +24,7 @@ enum class NodeType {
 
 class Node {
  public:
-  Node(const char* nameStr);
+  explicit Node(const char* nameStr);
 
   void addChild(Node* child);
   virtual void draw(Display* displays);
@@ -31,7 +34,7 @@ class Node {
 
   char name[k_maxNodeNameChars + 1] = {};
   NodeType m_nodeType = NodeType::None;
-  void (* drawFunc)(Node* node) = nullptr; // draw function pointer
+  void (*drawFunc)(Node* node) = nullptr;  // draw function pointer
 
  public:
   std::vector<Node*> children;
@@ -42,4 +45,4 @@ class Node {
   uint32_t numPins = 0;
 };
 
-#endif // NODE_H
+#endif  // NODE_H

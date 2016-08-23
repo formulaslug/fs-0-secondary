@@ -1,3 +1,5 @@
+// Copyright (c) Formula Slug 2016. All Rights Reserved.
+
 #include "DashNode.h"
 
 /* Available sizes: 8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 24, 28, 32, 40, 60,
@@ -5,8 +7,7 @@
  */
 #include <font_Arial.h>
 
-DashNode::DashNode(const char* nameStr) :
-  Node(nameStr) {}
+DashNode::DashNode(const char* nameStr) : Node(nameStr) {}
 
 void DashNode::draw(Display* displays) {
   // display 1

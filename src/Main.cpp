@@ -1,8 +1,11 @@
+// Copyright (c) Formula Slug 2016. All Rights Reserved.
+
 /* @desc Secondary control system for UCSC's FSAE Electric Vehicle
  *       CAN nodeID=4
  */
 
-#include <cstdint>
+#include <stdint.h>
+
 #include <atomic>
 
 #include <IntervalTimer.h>
@@ -10,13 +13,13 @@
 /* Available sizes: 8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 24, 28, 32, 40, 60,
  *                  72, 96
  */
-#include "core_controls/ButtonTracker.h"
-#include "core_controls/CANopen.h"
-#include "libs/font_Arial.h"
-#include "libs/ILI9341_t3.h"
 #include "DashNode.h"
 #include "MenuNode.h"
 #include "Teensy.h"
+#include "core_controls/ButtonTracker.h"
+#include "core_controls/CANopen.h"
+#include "libs/ILI9341_t3.h"
+#include "libs/font_Arial.h"
 
 enum ButtonStates {
   BTN_NONE = 0x0,
@@ -63,13 +66,12 @@ int main() {
   constexpr uint32_t k_tftCS1 = 9;
   constexpr uint32_t k_tftMOSI = 11;
   constexpr uint32_t k_tftSCLK = 14;
-  constexpr uint32_t k_menuTimeout = 3000000; // in ms
+  constexpr uint32_t k_menuTimeout = 3000000;  // in ms
 
   // Instantiate display obj and properties; use hardware SPI (#13, #12, #11)
-  ILI9341_t3 tft[2] = {ILI9341_t3(k_tftCS0, k_tftDC0, 255, k_tftMOSI,
-                                  k_tftSCLK),
-                       ILI9341_t3(k_tftCS1, k_tftDC1, 255, k_tftMOSI,
-                                  k_tftSCLK)};
+  ILI9341_t3 tft[2] = {
+      ILI9341_t3(k_tftCS0, k_tftDC0, 255, k_tftMOSI, k_tftSCLK),
+      ILI9341_t3(k_tftCS1, k_tftDC1, 255, k_tftMOSI, k_tftSCLK)};
 
   /* The SPI bus needs to be initialized before CANopen to avoid a race
    * condition with using the builtin LED pin (the ILI9341_t3 needs to unset
@@ -89,7 +91,7 @@ int main() {
     tft[i].setTextColor(ILI9341_YELLOW);
     /* tft[0].setTextSize(2); */
     tft[i].setFont(Arial_20);
-    tft[i].setCursor(0, 4); // (x,y)
+    tft[i].setCursor(0, 4);  // (x,y)
   }
 
   // init Teensy pins
@@ -99,7 +101,7 @@ int main() {
   }
 
   // create the node tree
-  auto head = new DashNode(); // dash is tree head
+  auto head = new DashNode();  // dash is tree head
   head->m_nodeType = NodeType::DashHead;
 
   // main menu
@@ -324,9 +326,7 @@ void _20msISR() {
   g_canBus->processTxMessages();
 }
 
-void _3msISR() {
-  g_canBus->processRxMessages();
-}
+void _3msISR() { g_canBus->processRxMessages(); }
 
 void timeoutISR() {
   g_timeoutInterrupt.end();
@@ -369,21 +369,21 @@ void btnDebounce() {
  * @desc Writes the node's heartbeat to the CAN bus every 1s
  * @return The packaged message of type CAN_message_t
  */
-// TODO: bring this into core controls and have it use a node id that is received by the
-//    CANopen constructor
+// TODO: bring this into core controls and have it use a node id that is
+// received by the CANopen constructor
 CAN_message_t canGetHeartbeat() {
   static bool didInit = false;
   // heartbeat message formatted with: COB-ID=0x001, len=2
   static CAN_message_t heartbeatMsg = {
-    cobid_node4Heartbeat, 0, 2, 0, {0, 0, 0, 0, 0, 0, 0, 0}
-  };
+      cobid_node4Heartbeat, 0, 2, 0, {0, 0, 0, 0, 0, 0, 0, 0}};
 
   // insert the heartbeat payload on the first call
   if (!didInit) {
     // TODO: add this statically into the initialization of heartbeatMsg
     // populate payload (only once)
     for (uint32_t i = 0; i < 2; ++i) {
-      // set in message buff, each byte of the message, from least to most significant
+      // set in message buff, each byte of the message, from least to most
+      // significant
       heartbeatMsg.buf[i] = (payload_heartbeat >> ((1 - i) * 8)) & 0xff;
     }
     didInit = true;
