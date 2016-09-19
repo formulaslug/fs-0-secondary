@@ -41,7 +41,8 @@ void MenuNode::draw(Display* displays) {
   displays[1].setCursor(10, 10);
   displays[1].setFont(Arial_20);
 
-  // snprintf() doesn't exist on this platform, so tell the linter to ignore it
+  // std::snprintf() doesn't exist on this platform, so tell the linter to
+  // ignore it
   char str[30];
   std::sprintf(str, "[This is <%s> node data]",  // NOLINT
                children[childIndex]->name);
