@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-"""This script invokes format.py in the formulaslug/styleguide repository.
+"""This script invokes format.py in the wpilibsuite/styleguide repository.
 
-Set the FSAE_FORMAT environment variable to its location on disk before use. For
+Set the WPI_FORMAT environment variable to its location on disk before use. For
 example:
 
-FSAE_FORMAT="$HOME/styleguide" ./format.py
+WPI_FORMAT="$HOME/styleguide" ./format.py
 """
 
 import os
@@ -13,9 +13,9 @@ import subprocess
 import sys
 
 def main():
-    path = os.environ.get("FSAE_FORMAT")
+    path = os.environ.get("WPI_FORMAT")
     if path == None:
-        print("Error: FSAE_FORMAT environment variable not set")
+        print("Error: WPI_FORMAT environment variable not set")
         sys.exit(1)
 
     # Run main format.py script

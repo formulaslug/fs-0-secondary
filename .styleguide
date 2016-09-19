@@ -1,3 +1,19 @@
+cExtensions {
+  c
+  h
+}
+
+cppHeaderExtensions {
+  hpp
+}
+
+cppSrcExtensions {
+  cpp
+}
+
+otherExtensions {
+}
+
 genFolderExclude {
 }
 
