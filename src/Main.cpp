@@ -4,11 +4,10 @@
  *       CAN nodeID=4
  */
 
+#include <IntervalTimer.h>
 #include <stdint.h>
 
 #include <atomic>
-
-#include <IntervalTimer.h>
 
 /* Available sizes: 8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 24, 28, 32, 40, 60,
  *                  72, 96
