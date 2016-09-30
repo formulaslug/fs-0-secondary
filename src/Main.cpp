@@ -17,6 +17,7 @@
 #include "Teensy.h"
 #include "core_controls/ButtonTracker.h"
 #include "core_controls/CANopen.h"
+#include "core_controls/InterruptMutex.h"
 #include "libs/ILI9341_t3.h"
 #include "libs/font_Arial.h"
 
@@ -140,15 +141,19 @@ int main() {
    */
   Node* tempNode;
 
+  InterruptMutex interruptMut;
+
   Serial.println("[STATUS]: Initialized.");
 
   while (1) {
-    cli();
-    // print all transmitted messages
-    g_canBus->printTxAll();
-    // print all received messages
-    g_canBus->printRxAll();
-    sei();
+    {
+      std::lock_guard<InterruptMutex> lock(interruptMut);
+
+      // print all transmitted messages
+      g_canBus->printTxAll();
+      // print all received messages
+      g_canBus->printRxAll();
+    }
 
     // service main state machine
     switch (g_teensy->displayState) {
@@ -158,10 +163,12 @@ int main() {
          * navigation.
          */
         if (g_btnPressEvents != BTN_NONE) {
-          cli();
-          // Move to mainMenu node
-          g_teensy->currentNode = g_teensy->currentNode->children[0];
-          sei();
+          {
+            std::lock_guard<InterruptMutex> lock(interruptMut);
+
+            // Move to mainMenu node
+            g_teensy->currentNode = g_teensy->currentNode->children[0];
+          }
 
           // Transition to menu state
           g_teensy->displayState = DisplayState::Menu;
@@ -184,9 +191,11 @@ int main() {
           g_timeoutInterrupt.end();
           g_timeoutInterrupt.begin(timeoutISR, k_menuTimeout);
 
-          cli();
-          tempNode = g_teensy->currentNode;
-          sei();
+          {
+            std::lock_guard<InterruptMutex> lock(interruptMut);
+
+            tempNode = g_teensy->currentNode;
+          }
 
           if (tempNode->childIndex > 0) {
             tempNode->childIndex--;
@@ -208,15 +217,17 @@ int main() {
           g_timeoutInterrupt.begin(timeoutISR, k_menuTimeout);
 
           // Make sure node has children
-          cli();
-          tempNode = g_teensy->currentNode;
-          sei();
+          {
+            std::lock_guard<InterruptMutex> lock(interruptMut);
+            tempNode = g_teensy->currentNode;
+          }
 
           if (tempNode->children[tempNode->childIndex]->children.size() > 0) {
             // Move to the new node
-            cli();
-            g_teensy->currentNode = tempNode->children[tempNode->childIndex];
-            sei();
+            {
+              std::lock_guard<InterruptMutex> lock(interruptMut);
+              g_teensy->currentNode = tempNode->children[tempNode->childIndex];
+            }
             g_teensy->redrawScreen = true;
           } else {
             // (should show that item has no children)
@@ -233,9 +244,10 @@ int main() {
           g_timeoutInterrupt.end();
           g_timeoutInterrupt.begin(timeoutISR, k_menuTimeout);
 
-          cli();
-          tempNode = g_teensy->currentNode;
-          sei();
+          {
+            std::lock_guard<InterruptMutex> lock(interruptMut);
+            tempNode = g_teensy->currentNode;
+          }
 
           if (tempNode->childIndex == tempNode->children.size() - 1) {
             tempNode->childIndex = 0;
@@ -256,10 +268,12 @@ int main() {
           g_timeoutInterrupt.end();
           g_timeoutInterrupt.begin(timeoutISR, k_menuTimeout);
 
-          cli();
-          g_teensy->currentNode = g_teensy->currentNode->parent;
-          tempNode = g_teensy->currentNode;
-          sei();
+          {
+            std::lock_guard<InterruptMutex> lock(interruptMut);
+
+            g_teensy->currentNode = g_teensy->currentNode->parent;
+            tempNode = g_teensy->currentNode;
+          }
 
           if (tempNode->m_nodeType == NodeType::DashHead) {
             g_teensy->displayState = DisplayState::Dash;
@@ -281,9 +295,10 @@ int main() {
     // Update display
     if (g_teensy->redrawScreen) {
       // Execute draw function for node
-      cli();
-      g_teensy->currentNode->draw(tft);
-      sei();
+      {
+        std::lock_guard<InterruptMutex> lock(interruptMut);
+        g_teensy->currentNode->draw(tft);
+      }
 
       Serial.println("[EVENT]: Redrawing screen.");
 
