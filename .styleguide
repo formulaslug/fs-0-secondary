@@ -31,3 +31,18 @@ modifiableFolderExclude {
 
 modifiableFileExclude {
 }
+
+includeRelated {
+}
+
+includeCSys {
+}
+
+includeCppSys {
+}
+
+includeOtherLibs {
+}
+
+includeProject {
+}
