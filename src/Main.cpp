@@ -22,11 +22,11 @@
 #include "libs/font_Arial.h"
 
 enum ButtonStates {
-  BTN_NONE = 0x0,
-  BTN_UP = 0x1,
-  BTN_RIGHT = 0x2,
-  BTN_DOWN = 0x4,
-  BTN_LEFT = 0x8
+  kBtnNone = 0x0,
+  kBtnUp = 0x1,
+  kBtnRight = 0x2,
+  kBtnDown = 0x4,
+  kBtnLeft = 0x8
 };
 
 // timer interrupt handlers
@@ -41,13 +41,13 @@ CAN_message_t canGetHeartbeat();
 
 void btnDebounce();
 
-constexpr uint32_t k_adcChangeTolerance = 3;
+constexpr uint32_t kAdcChangeTolerance = 3;
 
 // Number of buttons
-constexpr uint32_t k_numBtns = 4;
+constexpr uint32_t kNumBtns = 4;
 
 // First pin used by buttons. The rest follow in sequentially increasing order.
-constexpr uint32_t k_startBtnPin = 5;
+constexpr uint32_t kStartBtnPin = 5;
 
 static IntervalTimer g_timeoutInterrupt;
 
@@ -60,26 +60,25 @@ static std::atomic<uint8_t> g_btnReleaseEvents{0};
 static std::atomic<uint8_t> g_btnHeldEvents{0};
 
 int main() {
-  constexpr uint32_t k_tftDC0 = 15;
-  constexpr uint32_t k_tftCS0 = 10;
-  constexpr uint32_t k_tftDC1 = 20;
-  constexpr uint32_t k_tftCS1 = 9;
-  constexpr uint32_t k_tftMOSI = 11;
-  constexpr uint32_t k_tftSCLK = 14;
-  constexpr uint32_t k_menuTimeout = 3000000;  // in ms
+  constexpr uint32_t kTftDC0 = 15;
+  constexpr uint32_t kTftCS0 = 10;
+  constexpr uint32_t kTftDC1 = 20;
+  constexpr uint32_t kTftCS1 = 9;
+  constexpr uint32_t kTftMOSI = 11;
+  constexpr uint32_t kTftSCLK = 14;
+  constexpr uint32_t kMenuTimeout = 3000000;  // in ms
 
   // Instantiate display obj and properties; use hardware SPI (#13, #12, #11)
-  ILI9341_t3 tft[2] = {
-      ILI9341_t3(k_tftCS0, k_tftDC0, 255, k_tftMOSI, k_tftSCLK),
-      ILI9341_t3(k_tftCS1, k_tftDC1, 255, k_tftMOSI, k_tftSCLK)};
+  ILI9341_t3 tft[2] = {ILI9341_t3(kTftCS0, kTftDC0, 255, kTftMOSI, kTftSCLK),
+                       ILI9341_t3(kTftCS1, kTftDC1, 255, kTftMOSI, kTftSCLK)};
 
   /* The SPI bus needs to be initialized before CANopen to avoid a race
    * condition with using the builtin LED pin (the ILI9341_t3 needs to unset
    * that pin as the SPI clock before the CANopen class treats it as an LED).
    */
-  constexpr uint32_t k_ID = 0x680;
-  constexpr uint32_t k_baudRate = 250000;
-  g_canBus = new CANopen(k_ID, k_baudRate);
+  constexpr uint32_t kID = 0x680;
+  constexpr uint32_t kBaudRate = 250000;
+  g_canBus = new CANopen(kID, kBaudRate);
 
   Serial.begin(115200);
 
@@ -96,7 +95,7 @@ int main() {
 
   // init Teensy pins
   // -> init btn pins
-  for (i = k_startBtnPin; i < (k_startBtnPin + k_numBtns); i++) {
+  for (i = kStartBtnPin; i < (kStartBtnPin + kNumBtns); i++) {
     pinMode(i, INPUT_PULLUP);
   }
 
@@ -162,7 +161,7 @@ int main() {
         /* Check if should display menu. This btnPress is not counted for menu
          * navigation.
          */
-        if (g_btnPressEvents != BTN_NONE) {
+        if (g_btnPressEvents != kBtnNone) {
           {
             std::lock_guard<InterruptMutex> lock(interruptMut);
 
@@ -175,10 +174,10 @@ int main() {
           g_teensy->redrawScreen = true;
 
           // Consume all button events
-          g_btnPressEvents = BTN_NONE;
+          g_btnPressEvents = kBtnNone;
 
           // Start timeout
-          g_timeoutInterrupt.begin(timeoutISR, k_menuTimeout);
+          g_timeoutInterrupt.begin(timeoutISR, kMenuTimeout);
 
           Serial.println("[EVENT]: Button pressed.");
         }
@@ -186,10 +185,10 @@ int main() {
       // Display members of menu node tree
       case DisplayState::Menu:
         // Up, backward through child highlighted
-        if (g_btnPressEvents & BTN_UP) {
+        if (g_btnPressEvents & kBtnUp) {
           // Reset timeout interrupt
           g_timeoutInterrupt.end();
-          g_timeoutInterrupt.begin(timeoutISR, k_menuTimeout);
+          g_timeoutInterrupt.begin(timeoutISR, kMenuTimeout);
 
           {
             std::lock_guard<InterruptMutex> lock(interruptMut);
@@ -205,16 +204,16 @@ int main() {
 
           g_teensy->redrawScreen = true;
 
-          g_btnPressEvents &= ~BTN_UP;
+          g_btnPressEvents &= ~kBtnUp;
 
           Serial.println("[EVENT]: Button <UP> pressed.");
         }
 
         // Right, into child
-        if (g_btnPressEvents & BTN_RIGHT) {
+        if (g_btnPressEvents & kBtnRight) {
           // Reset timeout interrupt
           g_timeoutInterrupt.end();
-          g_timeoutInterrupt.begin(timeoutISR, k_menuTimeout);
+          g_timeoutInterrupt.begin(timeoutISR, kMenuTimeout);
 
           // Make sure node has children
           {
@@ -233,16 +232,16 @@ int main() {
             // (should show that item has no children)
           }
 
-          g_btnPressEvents &= ~BTN_RIGHT;
+          g_btnPressEvents &= ~kBtnRight;
 
           Serial.println("[EVENT]: Button <RIGHT> pressed.");
         }
 
         // Down, forward through child highlighted
-        if (g_btnPressEvents & BTN_DOWN) {
+        if (g_btnPressEvents & kBtnDown) {
           // Reset timeout interrupt
           g_timeoutInterrupt.end();
-          g_timeoutInterrupt.begin(timeoutISR, k_menuTimeout);
+          g_timeoutInterrupt.begin(timeoutISR, kMenuTimeout);
 
           {
             std::lock_guard<InterruptMutex> lock(interruptMut);
@@ -257,16 +256,16 @@ int main() {
 
           g_teensy->redrawScreen = true;
 
-          g_btnPressEvents &= ~BTN_DOWN;
+          g_btnPressEvents &= ~kBtnDown;
 
           Serial.println("[EVENT]: Button <DOWN> pressed.");
         }
 
         // Left, out to parent
-        if (g_btnPressEvents & BTN_LEFT) {
+        if (g_btnPressEvents & kBtnLeft) {
           // Reset timeout interrupt
           g_timeoutInterrupt.end();
-          g_timeoutInterrupt.begin(timeoutISR, k_menuTimeout);
+          g_timeoutInterrupt.begin(timeoutISR, kMenuTimeout);
 
           {
             std::lock_guard<InterruptMutex> lock(interruptMut);
@@ -281,7 +280,7 @@ int main() {
 
           g_teensy->redrawScreen = true;
 
-          g_btnPressEvents &= ~BTN_LEFT;
+          g_btnPressEvents &= ~kBtnLeft;
 
           Serial.println("[EVENT]: Button <LEFT> pressed.");
         }
@@ -289,8 +288,8 @@ int main() {
     }
 
     // Consume all unused events
-    g_btnReleaseEvents = BTN_NONE;
-    g_btnHeldEvents = BTN_NONE;
+    g_btnReleaseEvents = kBtnNone;
+    g_btnHeldEvents = kBtnNone;
 
     // Update display
     if (g_teensy->redrawScreen) {
@@ -325,10 +324,10 @@ void _500msISR() {
   // Check if node's observed pins changed in value and must re-render
   for (i = 0; i < tempNode->numPins; i++) {
     newVal = digitalReadFast(tempNode->pins[i]);
-    valDecreased = newVal - tempNode->pinVals[i] < -k_adcChangeTolerance;
-    valIncreased = newVal - tempNode->pinVals[i] > k_adcChangeTolerance;
+    valDecreased = newVal - tempNode->pinVals[i] < -kAdcChangeTolerance;
+    valIncreased = newVal - tempNode->pinVals[i] > kAdcChangeTolerance;
     if (valDecreased || valIncreased) {
-      // pin/adc val changed by more than k_adcChangeTolerance
+      // pin/adc val changed by more than kAdcChangeTolerance
       tempNode->pinVals[i] = newVal;
       g_teensy->redrawScreen = true;
     }
@@ -353,10 +352,10 @@ void timeoutISR() {
 }
 
 void btnDebounce() {
-  static ButtonTracker<4> upButton(k_startBtnPin, false);
-  static ButtonTracker<4> rightButton(k_startBtnPin + 1, false);
-  static ButtonTracker<4> downButton(k_startBtnPin + 2, false);
-  static ButtonTracker<4> leftButton(k_startBtnPin + 3, false);
+  static ButtonTracker<4> upButton(kStartBtnPin, false);
+  static ButtonTracker<4> rightButton(kStartBtnPin + 1, false);
+  static ButtonTracker<4> downButton(kStartBtnPin + 2, false);
+  static ButtonTracker<4> leftButton(kStartBtnPin + 3, false);
 
   upButton.update();
   rightButton.update();
@@ -389,7 +388,7 @@ CAN_message_t canGetHeartbeat() {
   static bool didInit = false;
   // heartbeat message formatted with: COB-ID=0x001, len=2
   static CAN_message_t heartbeatMsg = {
-      cobid_node4Heartbeat, 0, 2, 0, {0, 0, 0, 0, 0, 0, 0, 0}};
+      kCobid_node4Heartbeat, 0, 2, 0, {0, 0, 0, 0, 0, 0, 0, 0}};
 
   // insert the heartbeat payload on the first call
   if (!didInit) {
@@ -398,7 +397,7 @@ CAN_message_t canGetHeartbeat() {
     for (uint32_t i = 0; i < 2; ++i) {
       // set in message buff, each byte of the message, from least to most
       // significant
-      heartbeatMsg.buf[i] = (payload_heartbeat >> ((1 - i) * 8)) & 0xff;
+      heartbeatMsg.buf[i] = (kPayloadHeartbeat >> ((1 - i) * 8)) & 0xff;
     }
     didInit = true;
   }
