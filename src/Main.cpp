@@ -4,10 +4,11 @@
  *       CAN nodeID=4
  */
 
-#include <IntervalTimer.h>
 #include <stdint.h>
 
 #include <atomic>
+
+#include <IntervalTimer.h>
 
 /* Available sizes: 8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 24, 28, 32, 40, 60,
  *                  72, 96
@@ -17,6 +18,7 @@
 #include "Teensy.h"
 #include "core_controls/ButtonTracker.h"
 #include "core_controls/CANopen.h"
+#include "core_controls/CANopenPDO.h"
 #include "core_controls/InterruptMutex.h"
 #include "libs/ILI9341_t3.h"
 #include "libs/font_Arial.h"
@@ -35,9 +37,6 @@ void _500msISR();
 void _20msISR();
 void _3msISR();
 void timeoutISR();
-
-// declarations of the can message packing functions
-CAN_message_t canGetHeartbeat();
 
 void btnDebounce();
 
@@ -311,7 +310,8 @@ int main() {
  */
 void _1sISR() {
   // enqueue heartbeat message to g_canTxQueue
-  g_canBus->queueTxMessage(canGetHeartbeat());
+  HeartbeatMessage heartbeatMessage(kCobid_node4Heartbeat);
+  g_canBus->queueTxMessage(heartbeatMessage);
 }
 
 void _500msISR() {
@@ -376,31 +376,4 @@ void btnDebounce() {
   g_btnHeldEvents |= rightButton.held() << 1;
   g_btnHeldEvents |= downButton.held() << 2;
   g_btnHeldEvents |= leftButton.held() << 3;
-}
-
-/**
- * @desc Writes the node's heartbeat to the CAN bus every 1s
- * @return The packaged message of type CAN_message_t
- */
-// TODO: bring this into core controls and have it use a node id that is
-// received by the CANopen constructor
-CAN_message_t canGetHeartbeat() {
-  static bool didInit = false;
-  // heartbeat message formatted with: COB-ID=0x001, len=2
-  static CAN_message_t heartbeatMsg = {
-      kCobid_node4Heartbeat, 0, 2, 0, {0, 0, 0, 0, 0, 0, 0, 0}};
-
-  // insert the heartbeat payload on the first call
-  if (!didInit) {
-    // TODO: add this statically into the initialization of heartbeatMsg
-    // populate payload (only once)
-    for (uint32_t i = 0; i < 2; ++i) {
-      // set in message buff, each byte of the message, from least to most
-      // significant
-      heartbeatMsg.buf[i] = (kPayloadHeartbeat >> ((1 - i) * 8)) & 0xff;
-    }
-    didInit = true;
-  }
-  // return the packed/formatted message
-  return heartbeatMsg;
 }
