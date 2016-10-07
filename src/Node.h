@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 
+#include <memory>
 #include <vector>
 
 #include <ILI9341_t3.h>
@@ -26,7 +27,7 @@ class Node {
  public:
   explicit Node(const char* nameStr);
 
-  void addChild(Node* child);
+  void addChild(std::unique_ptr<Node> child);
   virtual void draw(Display* displays);
 
   static constexpr uint32_t k_maxNumPins = 10;
@@ -37,7 +38,7 @@ class Node {
   void (*drawFunc)(Node* node) = nullptr;  // draw function pointer
 
  public:
-  std::vector<Node*> children;
+  std::vector<std::unique_ptr<Node>> children;
   uint32_t childIndex = 0;
   Node* parent = nullptr;
   uint32_t pins[k_maxNumPins] = {};

@@ -4,4 +4,6 @@
 
 #include "Node.h"
 
-Teensy::Teensy(Node* currentNode) { this->currentNode = currentNode; }
+Teensy::Teensy(std::unique_ptr<Node> headNode) {
+  this->headNode = std::move(headNode);
+}

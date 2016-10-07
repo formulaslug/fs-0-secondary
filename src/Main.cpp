@@ -7,6 +7,7 @@
 #include <stdint.h>
 
 #include <atomic>
+#include <memory>
 
 #include <IntervalTimer.h>
 
@@ -20,6 +21,7 @@
 #include "core_controls/CANopen.h"
 #include "core_controls/CANopenPDO.h"
 #include "core_controls/InterruptMutex.h"
+#include "core_controls/make_unique.h"
 #include "libs/ILI9341_t3.h"
 #include "libs/font_Arial.h"
 
@@ -50,9 +52,9 @@ constexpr uint32_t kStartBtnPin = 5;
 
 static IntervalTimer g_timeoutInterrupt;
 
-static Teensy* g_teensy;
+static std::unique_ptr<Teensy> g_teensy;
 
-static CANopen* g_canBus = nullptr;
+static std::unique_ptr<CANopen> g_canBus;
 
 static std::atomic<uint8_t> g_btnPressEvents{0};
 static std::atomic<uint8_t> g_btnReleaseEvents{0};
@@ -77,7 +79,7 @@ int main() {
    */
   constexpr uint32_t kID = 0x680;
   constexpr uint32_t kBaudRate = 250000;
-  g_canBus = new CANopen(kID, kBaudRate);
+  g_canBus = std::make_unique<CANopen>(kID, kBaudRate);
 
   Serial.begin(115200);
 
@@ -99,24 +101,24 @@ int main() {
   }
 
   // create the node tree
-  auto head = new DashNode();  // dash is tree head
+  auto head = std::make_unique<DashNode>();  // dash is tree head
   head->m_nodeType = NodeType::DashHead;
 
   // main menu
-  auto menuHead = new MenuNode();
+  auto menuHead = std::make_unique<MenuNode>();
   menuHead->m_nodeType = NodeType::MenuHead;
-  head->addChild(menuHead);
+  head->addChild(std::move(menuHead));
 
-  auto sensors = new MenuNode("Sensors");
-  sensors->addChild(new Node("Sensor 1"));
-  sensors->addChild(new Node("Sensor 2"));
-  sensors->addChild(new Node("Sensor 3"));
-  menuHead->addChild(sensors);
+  auto sensors = std::make_unique<MenuNode>("Sensors");
+  sensors->addChild(std::make_unique<Node>("Sensor 1"));
+  sensors->addChild(std::make_unique<Node>("Sensor 2"));
+  sensors->addChild(std::make_unique<Node>("Sensor 3"));
+  menuHead->addChild(std::move(sensors));
 
-  menuHead->addChild(new MenuNode("Settings"));
-  menuHead->addChild(new MenuNode("Other"));
+  menuHead->addChild(std::make_unique<MenuNode>("Settings"));
+  menuHead->addChild(std::make_unique<MenuNode>("Other"));
 
-  g_teensy = new Teensy(head);
+  g_teensy = std::make_unique<Teensy>(std::move(head));
 
   /* NODES: - must have all their attributes defined, but do not need to have
    * children
@@ -165,7 +167,7 @@ int main() {
             std::lock_guard<InterruptMutex> lock(interruptMut);
 
             // Move to mainMenu node
-            g_teensy->currentNode = g_teensy->currentNode->children[0];
+            g_teensy->currentNode = g_teensy->currentNode->children[0].get();
           }
 
           // Transition to menu state
@@ -224,7 +226,8 @@ int main() {
             // Move to the new node
             {
               std::lock_guard<InterruptMutex> lock(interruptMut);
-              g_teensy->currentNode = tempNode->children[tempNode->childIndex];
+              g_teensy->currentNode =
+                  tempNode->children[tempNode->childIndex].get();
             }
             g_teensy->redrawScreen = true;
           } else {
@@ -310,7 +313,7 @@ int main() {
  */
 void _1sISR() {
   // enqueue heartbeat message to g_canTxQueue
-  HeartbeatMessage heartbeatMessage(kCobid_node4Heartbeat);
+  const HeartbeatMessage heartbeatMessage(kCobid_node4Heartbeat);
   g_canBus->queueTxMessage(heartbeatMessage);
 }
 

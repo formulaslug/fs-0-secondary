@@ -4,6 +4,7 @@
 #define TEENSY_H
 
 #include <atomic>
+#include <memory>
 
 class Node;
 
@@ -11,9 +12,10 @@ class Node;
 enum class DisplayState { Dash, Menu };
 
 struct Teensy {
-  explicit Teensy(Node* currentNode);
+  explicit Teensy(std::unique_ptr<Node> headNode);
 
   std::atomic<DisplayState> displayState{DisplayState::Dash};
+  std::unique_ptr<Node> headNode;
   Node* currentNode;
   std::atomic<bool> redrawScreen{true};  // Trigger an initial rendering
 };
