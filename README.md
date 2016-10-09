@@ -2,7 +2,7 @@
 
 This repository contains the software for our seconary controller of the Formula Slug 2016 racecar, FS-0.
 
-The style guide repository at https://github.com/formulaslug/styleguide contains our style guide for C and C++ code and formatting scripts.
+The style guide repository at https://github.com/wpilibsuite/styleguide contains our style guide for C and C++ code and formatting scripts.
 
 ## TODO
 - Add caret to node menu showing whether or not it has children
