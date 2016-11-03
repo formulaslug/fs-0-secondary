@@ -39,10 +39,10 @@ endif
 TOOLSPATH := $(ARDUINOPATH)/hardware/tools
 
 # path location for Teensy 3 core
-COREPATH = $(CURDIR)/src/core_controls/core
+COREPATH = $(CURDIR)/src/fs-0-core/core
 
 # path location for Arduino libraries
-LIBRARYPATH = $(CURDIR)/src/core_controls/libs -I$(CURDIR)/src/libs
+LIBRARYPATH = $(CURDIR)/src/fs-0-core/libs -I$(CURDIR)/src/libs
 
 # path location for the arm-none-eabi compiler
 COMPILERPATH = $(TOOLSPATH)/arm/bin

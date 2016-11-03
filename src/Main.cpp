@@ -17,11 +17,11 @@
 #include "DashNode.h"
 #include "MenuNode.h"
 #include "Teensy.h"
-#include "core_controls/ButtonTracker.h"
-#include "core_controls/CANopen.h"
-#include "core_controls/CANopenPDO.h"
-#include "core_controls/InterruptMutex.h"
-#include "core_controls/make_unique.h"
+#include "fs-0-core/ButtonTracker.h"
+#include "fs-0-core/CANopen.h"
+#include "fs-0-core/CANopenPDO.h"
+#include "fs-0-core/InterruptMutex.h"
+#include "fs-0-core/make_unique.h"
 #include "libs/ILI9341_t3.h"
 #include "libs/font_Arial.h"
 
@@ -35,7 +35,6 @@ enum ButtonStates {
 
 // timer interrupt handlers
 void _1sISR();
-void _500msISR();
 void _20msISR();
 void _3msISR();
 void timeoutISR();
@@ -126,9 +125,6 @@ int main() {
 
   IntervalTimer _1sInterrupt;
   _1sInterrupt.begin(_1sISR, 1000000);
-
-  IntervalTimer _500msInterrupt;
-  _500msInterrupt.begin(_500msISR, 500000);
 
   IntervalTimer _20msInterrupt;
   _20msInterrupt.begin(_20msISR, 20000);
@@ -317,7 +313,7 @@ void _1sISR() {
   g_canBus->queueTxMessage(heartbeatMessage);
 }
 
-void _500msISR() {
+void _20msISR() {
   static uint32_t i, newVal;
   static bool valDecreased, valIncreased;
   static Node* tempNode;
@@ -335,9 +331,7 @@ void _500msISR() {
       g_teensy->redrawScreen = true;
     }
   }
-}
 
-void _20msISR() {
   btnDebounce();
   g_canBus->processTxMessages();
 }
