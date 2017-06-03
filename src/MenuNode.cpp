@@ -7,7 +7,7 @@
 /* Available sizes: 8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 24, 28, 32, 40, 60,
  *                  72, 96
  */
-#include <font_Arial.h>
+#include "libs/font_Arial.h"
 
 MenuNode::MenuNode(const char* nameStr) : Node(nameStr) {}
 

@@ -12,7 +12,7 @@ TEENSY_CORE_SPEED = 48000000
 #ARDUINO = 10600
 
 # configurable options
-OPTIONS = -DUSB_SERIAL -DLAYOUT_US_ENGLISH
+OPTIONS = -DUSB_SERIAL
 
 # directory to build in
 BUILDDIR = $(abspath $(CURDIR)/build)
@@ -26,10 +26,6 @@ BUILDDIR = $(abspath $(CURDIR)/build)
 # path location for Teensy Loader, teensy_post_compile and teensy_reboot
 ARDUINOPATH = $(CURDIR)
 
-ifeq ($(OS),Windows_NT)
-    $(error What is Win Dose?)
-endif
-
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
     ARDUINOPATH := /usr/share/arduino
@@ -42,10 +38,7 @@ TOOLSPATH := $(ARDUINOPATH)/hardware/tools
 COREPATH = $(CURDIR)/src/fs-0-core/core
 
 # path location for Arduino libraries
-LIBRARYPATH = $(CURDIR)/src/fs-0-core/libs -I$(CURDIR)/src/libs
-
-# path location for the arm-none-eabi compiler
-COMPILERPATH = $(TOOLSPATH)/arm/bin
+LIBRARYPATH = $(CURDIR)/src/fs-0-core/libs
 
 #************************************************************************
 # Settings below this point usually do not need to be edited
@@ -55,7 +48,7 @@ COMPILERPATH = $(TOOLSPATH)/arm/bin
 CPPFLAGS = -Wall -Os -s -mthumb -ffunction-sections -fdata-sections -nostdlib -MMD $(OPTIONS) -DTEENSYDUINO=128 -DF_CPU=$(TEENSY_CORE_SPEED) -I$(COREPATH) -I$(LIBRARYPATH)
 
 # compiler options for C++ only
-CXXFLAGS = -std=c++11 -felide-constructors -fno-exceptions -fno-rtti -flto
+CXXFLAGS = -std=c++1y -felide-constructors -fno-exceptions -fno-rtti -flto
 
 # compiler options for C only
 CFLAGS =
@@ -88,13 +81,11 @@ else
     endif
 endif
 
-CPPFLAGS += -DUSING_MAKEFILE
-
 # names for the compiler programs
-CC := $(abspath $(COMPILERPATH))/arm-none-eabi-gcc
-CXX := $(abspath $(COMPILERPATH))/arm-none-eabi-g++
-OBJCOPY := $(abspath $(COMPILERPATH))/arm-none-eabi-objcopy
-SIZE := $(abspath $(COMPILERPATH))/arm-none-eabi-size
+CC := arm-none-eabi-gcc
+CXX := arm-none-eabi-g++
+OBJCOPY := arm-none-eabi-objcopy
+SIZE := arm-none-eabi-size
 
 # Make does not offer a recursive wildcard function, so here's one:
 rwildcard=$(wildcard $1$2) $(foreach dir,$(wildcard $1*),$(call rwildcard,$(dir)/,$2))
@@ -102,9 +93,8 @@ rwildcard=$(wildcard $1$2) $(foreach dir,$(wildcard $1*),$(call rwildcard,$(dir)
 # automatically create lists of the sources and objects
 C_FILES := $(call rwildcard,src/,*.c)
 CPP_FILES := $(call rwildcard,src/,*.cpp)
-INO_FILES := $(call rwildcard,src/,*.ino)
 
-SOURCES := $(C_FILES:.c=.o) $(CPP_FILES:.cpp=.o) $(INO_FILES:.ino=.o) $(TC_FILES:.c=.o) $(TCPP_FILES:.cpp=.o) $(LC_FILES:.c=.o) $(LCPP_FILES:.cpp=.o)
+SOURCES := $(C_FILES:.c=.o) $(CPP_FILES:.cpp=.o) $(TC_FILES:.c=.o) $(TCPP_FILES:.cpp=.o) $(LC_FILES:.c=.o) $(LCPP_FILES:.cpp=.o)
 OBJS := $(foreach src,$(SOURCES), $(BUILDDIR)/$(src))
 
 .PHONY: all
@@ -113,6 +103,7 @@ all: hex
 .PHONY: build
 build: $(TARGET).elf
 
+.PHONY: hex
 hex: $(TARGET).hex
 
 .PHONY: post_compile
@@ -135,11 +126,6 @@ $(BUILDDIR)/%.o: %.cpp
 	@echo "[CXX] $<"
 	@mkdir -p "$(dir $@)"
 	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(L_INC) -o "$@" -c "$<"
-
-$(BUILDDIR)/%.o: %.ino
-	@echo "[CXX] $<"
-	@mkdir -p "$(dir $@)"
-	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(L_INC) -o "$@" -x c++ -include Arduino.h -c "$<"
 
 $(TARGET).elf: $(OBJS) $(LDSCRIPT)
 	@echo "[LD] $@"

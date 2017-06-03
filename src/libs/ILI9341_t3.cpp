@@ -17,7 +17,7 @@
  ****************************************************/
 
 #include "ILI9341_t3.h"
-#include <SPI.h>
+#include "SPI.h"
 #include <algorithm>
 #include <cmath>
 

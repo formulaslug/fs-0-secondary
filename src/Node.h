@@ -8,7 +8,7 @@
 #include <memory>
 #include <vector>
 
-#include <ILI9341_t3.h>
+#include "libs/ILI9341_t3.h"
 /* ILI9341.h defines a swap macro that conflicts with the C++ standard library,
  * so this undefines it to avoid problems (it should be using the standard
  * library's std::swap() anyway...)
