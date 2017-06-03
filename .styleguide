@@ -23,9 +23,8 @@ genFileExclude {
 }
 
 modifiableFolderExclude {
-  \.git
   build
-  core_controls
+  fs-0-core
   libs
 }
 
