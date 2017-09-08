@@ -1,7 +1,6 @@
 // Copyright (c) 2016-2017 Formula Slug. All Rights Reserved.
 
-#ifndef TEENSY_H
-#define TEENSY_H
+#pragma once
 
 #include <atomic>
 #include <memory>
@@ -19,5 +18,3 @@ struct Teensy {
   Node* currentNode;
   std::atomic<bool> redrawScreen{true};  // Trigger an initial rendering
 };
-
-#endif  // TEENSY_H

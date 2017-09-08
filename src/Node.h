@@ -1,7 +1,6 @@
 // Copyright (c) 2016-2017 Formula Slug. All Rights Reserved.
 
-#ifndef NODE_H
-#define NODE_H
+#pragma once
 
 #include <stdint.h>
 
@@ -9,6 +8,7 @@
 #include <vector>
 
 #include "libs/ILI9341_t3.h"
+
 /* ILI9341.h defines a swap macro that conflicts with the C++ standard library,
  * so this undefines it to avoid problems (it should be using the standard
  * library's std::swap() anyway...)
@@ -45,5 +45,3 @@ class Node {
   uint32_t pinVals[k_maxNumPins] = {};
   uint32_t numPins = 0;
 };
-
-#endif  // NODE_H

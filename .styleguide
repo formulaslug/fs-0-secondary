@@ -1,47 +1,13 @@
-cExtensions {
-  c
-  h
+cppHeaderFileInclude {
+  \.h$
+  \.hpp$
 }
 
-cppHeaderExtensions {
-  hpp
-}
-
-cppSrcExtensions {
-  cpp
-}
-
-otherExtensions {
-}
-
-genFolderExclude {
-}
-
-genFileExclude {
-  \.elf$
-  \.hex$
-}
-
-modifiableFolderExclude {
-  build
-  fs-0-core
-  libs
+cppSrcFileInclude {
+  \.cpp$
 }
 
 modifiableFileExclude {
-}
-
-includeRelated {
-}
-
-includeCSys {
-}
-
-includeCppSys {
-}
-
-includeOtherLibs {
-}
-
-includeProject {
+  build/
+  libs/
 }
